@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>LTR MLOps Pipeline Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            overflow: auto;
+        }
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>LTR MLOps Pipeline Documentation</h1>
+    <p>This documentation provides an overview of the LTR (Learning to Rank) MLOps pipeline, explaining the classes and functions within the codebase. It includes examples of how the pipeline components interact and how they are configured.</p>
+
+    <div class="section">
+        <h2>Classes Overview</h2>
+
+        <div class="section">
+            <h3>LTRDataTransformer</h3>
+            <p>This class is responsible for transforming and augmenting the input data. It handles the loading of data, transformation with button type augmentation strategy, and filtering of unnecessary data.</p>
+            <pre class="code-block">
+class LTRDataTransformer(Transformer):
+    def __init__(self, config: Dict[str, Any]) -> None:
+        super().__init__()
+        self.config = config
+        self.examples = pd.read_csv(self.config.get("example_csv_datapath"))
+        self.examples = self.examples.astype(LTRFeatures.col_dtypes.value)
+        self.augmenter = ButtonTypeDataAugumentStrategy(
+            data=self.examples,
+            label_to_degrade=self.config.get("label_to_degrade"),
+            level_to_degrade=self.config.get("level_to_degrade"),
+            lowest_level=self.config.get("lowest_level"),
+            button_type_col="BUTTON_TYPE",
+            label_col="label"
+        )
+    def transform(self) -> pd.DataFrame:
+        process_data = self.augmenter.execute()
+        return process_data
+            </pre>
+            <p>This class uses the <code>ButtonTypeDataAugumentStrategy</code> to augment the input data and then returns the processed data in the <code>transform</code> method.</p>
+        </div>
+
+        <div class="section">
+            <h3>LTRTuner</h3>
+            <p>The <code>LTRTuner</code> class is used to tune the hyperparameters of the model using the hyperopt library. It defines a search space and uses cross-validation to evaluate different sets of hyperparameters.</p>
+            <pre class="code-block">
+class LTRTuner(XGBTuner):
+    def __init__(self, features: List[str], config: Dict[str, Any]) -> None:
+        max_evals = config.get("max_eval_to_hyptertune")
+        hyper_space = self._hyper_space()
+        super().__init__(hyper_space=hyper_space, max_evals=max_evals)
+        self.features = features
+        self.nkfold = config.get("nkfold")
+    def objective(self, outputs: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
+        examples = outputs["Transformer"]
+        target_column = "label"
+        group_kfold = GroupKFold(n_splits=self.nkfold)
+        group_splits = group_kfold.split(X=examples[self.features], groups=examples.q.values)
+        train_scores, val_scores = [], []
+        for train_indices, val_indices in group_splits:
+            train_data = examples.iloc[train_indices]
+            val_data = examples.iloc[val_indices]
+            x_train, y_train = train_data.drop([target_column, "q"], axis=1), train_data[target_column]
+            x_val, y_val = val_data.drop([target_column, "q"], axis=1), val_data[target_column]
+            ranker = train_xgb_model(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val, ...)
+            evals_result = ranker.evals_result()
+            train_scores.append(np.mean(evals_result['validation_1']['ndcg-']))
+            val_scores.append(np.mean(evals_result['validation_0']['ndcg-']))
+        average_train_score = np.mean(train_scores)
+        average_val_score = np.mean(val_scores)
+        return {'loss': -average_val_score, 'params': params, 'status': STATUS_OK}
+            </pre>
+            <p>The objective function of this class evaluates different sets of hyperparameters and returns the negative validation score as the loss.</p>
+        </div>
+
+        <div class="section">
+            <h3>LTRTrainer</h3>
+            <p>The <code>LTRTrainer</code> class is responsible for training the XGBRanker model. It splits the data into training and validation sets and then fits the model using the training data.</p>
+            <pre class="code-block">
+class LTRTrainer(XGBTrainer):
+    def __init__(self, config: Dict[str, Any]) -> None:
+        super().__init__()
+        self.config = config
+        self.model_destination = self.config.get("model_destination")
+        self.earlystop_round = self.config.get("earlystop_round")
+        self.train_ratio = self.config.get("train_ratio")
+    def fit_model(self, outputs: Dict[str, Any]) -> xgb.XGBRanker:
+        data = outputs["Transformer"]
+        hyperparams = self.adjust_params(outputs["Tuner"])
+        x_train, y_train, train_groups, x_val, y_val, val_groups = self.split_data(data)
+        ranker = train_xgb_model(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val, ...)
+        ranker.save_model(self.model_destination)
+        return ranker
+            </pre>
+            <p>This class is responsible for training the model, using hyperparameters tuned by the <code>LTRTuner</code> class.</p>
+        </div>
+
+        <div class="section">
+            <h3>LTREvaluator</h3>
+            <p>The <code>LTREvaluator</code> class evaluates the model's performance. It compares the performance of the experiment model with the production model and returns the evaluation results.</p>
+            <pre class="code-block">
+class LTREvaluator(Evaluator):
+    def __init__(self, spark: SparkSession, features: List[str], config: Dict[str, Any]) -> None:
+        super().__init__(registered_model_name=config.get("registered_model_name"), ...)
+        self.spark = spark
+        self.features = features
+        self.config = config
+    def evaluate(self, outputs: Dict[str, Any]) -> Dict[str, int]:
+        model = outputs["Trainer"]
+        prod_model = self._load_prod_model()
+        ...
+            </pre>
+            <p>The evaluator compares the results of the experiment model and the production model and generates a report based on different top-k values.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Pipeline Execution</h2>
+        <p>The following is the main entry point of the pipeline, which initializes all components and runs the local pipeline.</p>
+        <pre class="code-block">
+def run(spark: SparkSession) -> None:
+    configs = get_yaml_config()
+    mlops_configs = configs.get("LTRMLOps")
+    transformer = LTRDataTransformer(config=mlops_configs.get("Transformer"))
+    tuner = LTRTuner(config=mlops_configs.get("Tuner"), features=LTRFeatures.features.value)
+    trainer = LTRTrainer(config=mlops_configs.get("Trainer"))
+    evaluator = LTREvaluator(spark=spark, features=LTRFeatures.features.value, config=mlops_configs.get("Evaluator"))
+    components = [transformer, tuner, trainer, evaluator]
+    pipeline = LocalPipeline(tracking_uri=mlops_configs.get("Metadata").get("tracking_uri"), components=components)
+    _ = pipeline.run()
+            </pre>
+        <p>The pipeline is created and executed by initializing components such as the <code>LTRDataTransformer</code>, <code>LTRTuner</code>, <code>LTRTrainer</code>, and <code>LTREvaluator</code> and passing them to the <code>LocalPipeline</code>.</p>
+    </div>
+
+</body>
+</html>

@@ -5,8 +5,9 @@ import mlflow
 import xgboost as xgb
 
 from collie.trainer.trainer import Trainer
+from collie.contracts.event import Event
+from collie._common.types import TrainerPayload
 from collie._common.decorator import type_checker
-from collie._common.types import ComponentOutput
 
 
 class XGBTrainer(Trainer):
@@ -16,10 +17,10 @@ class XGBTrainer(Trainer):
         super().__init__()
 
     @abstractmethod
-    def fit_model(self, outputs: ComponentOutput) -> xgb:
-        raise NotImplementedError("Please implement the *fit_model* method.")
+    def handle(self, event: Event) -> Event:
+        pass
 
-    def train(self) -> xgb:
+    def run(self, event: Event) -> xgb:
         """
         Train the XGBoost model.
 
@@ -46,9 +47,11 @@ class XGBTrainer(Trainer):
             extra_tags=None
         )
         
-        model = self._fit()
+        trainer_event = super().run(event)
+        trainer_payload: TrainerPayload = trainer_event.payload
+        self._check_model_type(trainer_payload=trainer_payload)
 
-        return {"model": model}
+        return trainer_event
     
     @type_checker((xgb.XGBClassifier, 
                  xgb.XGBModel, 
@@ -59,22 +62,6 @@ class XGBTrainer(Trainer):
                  "Model must be one of the following types: "
                  "XGBClassifier, XGBModel, XGBRanker, "
                  "XGBRegressor, XGBRFClassifier, or XGBRFRegressor.")
-    def _fit(self):
-
-        """
-        A wrapper around the abstract *fit_model* method.
-
-        This method starts a new MLflow run and logs the model.
-
-        Returns:
-            xgb.XGBClassifier|xgb.XGBModel|xgb.XGBRanker|xgb.XGBRegressor|xgb.XGBRFClassifier|xgb.XGBRFRegressor:
-                The trained XGBoost model.
-
-        Raises:
-            TypeError: If the model returned by *fit_model* is not one of the
-                following types: XGBClassifier, XGBModel, XGBRanker,
-                XGBRegressor, XGBRFClassifier, or XGBRFRegressor.
-        """
-        model = self.fit_model(self.outputs)
-
+    def _check_model_type(self, trainer_payload: TrainerPayload) -> None:
+        model = trainer_payload.model
         return model

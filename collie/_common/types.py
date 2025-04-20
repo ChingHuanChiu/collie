@@ -7,6 +7,19 @@ from enum import Enum, auto
 
 from pydantic import BaseModel
 
+from collie.transform.transform import Transformer
+from collie.trainer.trainer import Trainer
+from collie.tuner.tuner import Tuner
+from collie.evaluator.evaluator import Evaluator
+
+
+class CollieComponents(Enum):
+
+    TRAINER = Trainer
+    TRANSFORMER = Transformer
+    TUNER = Tuner 
+    EVALUATOR = Evaluator
+
 
 class EventType(Enum):
     DATA_READY = auto()

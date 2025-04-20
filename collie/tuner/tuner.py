@@ -6,6 +6,7 @@ from collie._common.types import (
     EventType,
     TunerPayload,
 )
+from collie._common.decorator import type_checker
 
 
 class Tuner(_EventHandler, MLFlowComponentABC):
@@ -15,7 +16,7 @@ class Tuner(_EventHandler, MLFlowComponentABC):
         
     @abstractmethod
     def handle(self, event: Event) -> Event:
-        raise NotImplementedError("Please implement the **transform** method.")
+        pass
     
     def run(self, event: Event) -> None:
         """
@@ -33,12 +34,19 @@ class Tuner(_EventHandler, MLFlowComponentABC):
         ):
             tuner_event = self._handle(event)
 
-            tuner_payload: TunerPayload = tuner_event.payload
+            tuner_payload = self._tuner_payload(tuner_event)
             event_type = EventType.TUNING_DONE
-            event.context.set("tuner_payload", tuner_payload)
+            # event.context.set("tuner_payload", tuner_payload)
 
             return Event(
                 type=event_type,
                 payload=tuner_payload,
                 context=event.context
             )
+
+    @type_checker((TunerPayload,) , 
+        "TunerPayload must be of type TunerPayload."
+    )    
+    def _tuner_payload(self, event: Event) -> TunerPayload: 
+
+        return event.payload

@@ -10,6 +10,7 @@ from collie._common.types import (
     EventType,
     EvaluatorPayload
 )
+from collie._common.decorator import type_checker
 
 
 class Evaluator(_EventHandler, MLFlowComponentABC):
@@ -26,7 +27,7 @@ class Evaluator(_EventHandler, MLFlowComponentABC):
 
     @abstractmethod
     def handle(self, event: Event) -> Event:
-        raise NotImplementedError("Please implement the **transform** method.")
+        pass
         
     def run(self, event: Event) -> Event:
         """
@@ -46,9 +47,9 @@ class Evaluator(_EventHandler, MLFlowComponentABC):
             
             evaluator_event = self._handle(event)
 
-            evaluator_payload: EvaluatorPayload = evaluator_event.payload
+            evaluator_payload = self._evaluator_payload(evaluator_event)
             event_type = EventType.EVALUATION_DONE
-            event.context.set("evaluator_payload", evaluator_payload)
+            # event.context.set("evaluator_payload", evaluator_payload)
             evaluation_results = evaluator_payload.metrics
 
 
@@ -97,3 +98,10 @@ class Evaluator(_EventHandler, MLFlowComponentABC):
         """
         versions = self.get_latest_version(self.registered_model_name, stages=stages)
         return str(versions + 1)
+    
+    @type_checker((EvaluatorPayload, ) , 
+        "EvaluatorPayload must be of type EvaluatorPayload."
+    )    
+    def _evaluator_payload(self, event: Event) -> EvaluatorPayload: 
+
+        return event.payload

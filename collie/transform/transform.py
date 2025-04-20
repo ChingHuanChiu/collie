@@ -6,6 +6,7 @@ from collie._common.types import (
     EventType,
     TransformerPayload,
 )
+from collie._common.decorator import type_checker
 
 
 class Transformer(_EventHandler, MLFlowComponentABC):
@@ -15,7 +16,7 @@ class Transformer(_EventHandler, MLFlowComponentABC):
 
     @abstractmethod
     def handle(self, event: Event) -> Event:
-        raise NotImplementedError("Please implement the **transform** method.")
+        pass
     
     def run(self, event: Event) -> Event:
         """
@@ -32,12 +33,19 @@ class Transformer(_EventHandler, MLFlowComponentABC):
         ):
             transformer_event = self._handle(event)
 
-            transformer_payload: TransformerPayload = transformer_event.payload
+            transformer_payload = self._transformer_payload(transformer_event)
             event_type = EventType.DATA_READY
-            event.context.set("transformer_payload", transformer_payload)
+            # event.context.set("transformer_payload", transformer_payload)
 
             return Event(
                 type=event_type,
                 payload=transformer_payload,
                 context=event.context
             )
+        
+    @type_checker((TransformerPayload,) , 
+        "TransformerPayload must be of type TransformerPayload."
+    )    
+    def _transformer_payload(self, event: Event) -> TransformerPayload: 
+
+        return event.payload

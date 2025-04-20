@@ -6,6 +6,7 @@ from collie._common.types import (
     EventType,
     TrainerPayload,
 )
+from collie._common.decorator import type_checker
 
 
 class Trainer(_EventHandler, MLFlowComponentABC):
@@ -15,7 +16,7 @@ class Trainer(_EventHandler, MLFlowComponentABC):
 
     @abstractmethod
     def handle(self, event: Event) -> Event:
-        raise NotImplementedError("Please implement the **transform** method.")
+        pass
     
     def run(self, event: Event) -> Event:
         """
@@ -32,12 +33,19 @@ class Trainer(_EventHandler, MLFlowComponentABC):
         ):
             trainer_event = self._handle(event)
 
-            trainer_payload: TrainerPayload = trainer_event.payload
+            trainer_payload = self._trainer_payload(trainer_event)
             event_type = EventType.TRAINING_DONE
-            event.context.set("trainer_payload", trainer_payload)
+            # event.context.set("trainer_payload", trainer_payload)
 
             return Event(
                 type=event_type,
                 payload=trainer_payload,
                 context=event.context
             )
+
+    @type_checker((TrainerPayload,) , 
+        "TrainerPayload must be of type TrainerPayload."
+    )    
+    def _trainer_payload(self, event: Event) -> TrainerPayload: 
+
+        return event.payload

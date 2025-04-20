@@ -4,7 +4,6 @@ from typing import (
     Optional,
     Union
 )
-from dataclasses import dataclass
 
 from pydantic import Field, BaseModel
 

@@ -1,21 +1,23 @@
-from typing import Any, Dict
 from abc import abstractmethod
 
-from collie.abstract.mlflow import MLFlowComponentABC
-from collie._common.mixin import OutputMixin
-from collie._common.types import ComponentOutput
+from collie.contracts.event import Event, _EventHandler
+from collie.contracts.mlflow import MLFlowComponentABC
+from collie._common.types import (
+    EventType,
+    TrainerPayload,
+)
 
 
-class Trainer(MLFlowComponentABC, OutputMixin):
+class Trainer(_EventHandler, MLFlowComponentABC):
 
     def __init__(self) -> None:
         super().__init__()
 
     @abstractmethod
-    def train(self) -> Dict[str, Any]:
-        raise NotImplementedError("Please implement the **train** method.")
+    def handle(self, event: Event) -> Event:
+        raise NotImplementedError("Please implement the **transform** method.")
     
-    def run(self) -> None:
+    def run(self, event: Event) -> Event:
         """
         Run the trainer component.
 
@@ -28,12 +30,14 @@ class Trainer(MLFlowComponentABC, OutputMixin):
             log_system_metrics=True, 
             nested=True
         ):
-            train_results = self.train()
+            trainer_event = self._handle(event)
 
-            self.outputs: ComponentOutput = {
-                "Trainer": train_results.get("model")
-            }
+            trainer_payload: TrainerPayload = trainer_event.payload
+            event_type = EventType.TRAINING_DONE
+            event.context.set("trainer_payload", trainer_payload)
 
-            model_loss = train_results.get("loss")
-            if model_loss is not None:
-                self.outputs.update({"ModelLoss": model_loss})
+            return Event(
+                type=event_type,
+                payload=trainer_payload,
+                context=event.context
+            )

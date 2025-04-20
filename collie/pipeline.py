@@ -3,7 +3,7 @@ from typing import Union, Optional
 from mlflow.tracking import MlflowClient
 
 from collie._common.enums import CollieComponents
-from collie.abstract.mlflow import MLFlowComponentABC
+from collie.contracts.mlflow import MLFlowComponentABC
 
 
 class LocalPipeline(MLFlowComponentABC):

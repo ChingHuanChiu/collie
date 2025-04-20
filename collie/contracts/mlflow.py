@@ -22,7 +22,7 @@ class MLFlowComponentABC(metaclass=ABCMeta):
     _mlflow_client = None
 
     @abstractmethod
-    def run(self) -> Any:
+    def run(self, *args, **kwargs) -> Any:
         raise NotImplementedError("Please implement the **run** method.")
     
     @property

@@ -18,9 +18,9 @@ from collie.trainer.trainer import Trainer
 from collie._common.decorator import type_checker
 from collie._common.types import ComponentOutput
 from collie._common.utils import get_logger
-from collie.utils.pytorch.callback.callback import Callback, _CallbackManager
-from collie.utils.pytorch.callback.model_checkpoint import ModelCheckpoint
-from collie.utils.pytorch.callback.earlystop import EarlyStopping
+from collie.common.pytorch.callback.callback import Callback, _CallbackManager
+from collie.common.pytorch.callback.model_checkpoint import ModelCheckpoint
+from collie.common.pytorch.callback.earlystop import EarlyStopping
 
 #TODO: Features to develop:
 # 1.. Train with multiple GPUs 

@@ -1,21 +1,18 @@
-from abc import abstractmethod
 from typing import (
-    Any, 
-    Dict, 
-    Union, 
-    Literal, 
-    List
+    List,
+    Literal,
 )
+from abc import abstractmethod
 
-from collie.abstract.mlflow import MLFlowComponentABC
-from collie._common.mixin import OutputMixin
+from collie.contracts.event import Event, _EventHandler
+from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.types import (
-    EvaluatorDataModel,
-    ComponentOutput
+    EventType,
+    EvaluatorPayload
 )
 
 
-class Evaluator(MLFlowComponentABC, OutputMixin):
+class Evaluator(_EventHandler, MLFlowComponentABC):
     
     def __init__(
         self, 
@@ -28,14 +25,10 @@ class Evaluator(MLFlowComponentABC, OutputMixin):
         self.model_uri = model_uri
 
     @abstractmethod
-    def evaluate(
-        self, 
-        outputs: ComponentOutput
-    ) -> Any:
+    def handle(self, event: Event) -> Event:
+        raise NotImplementedError("Please implement the **transform** method.")
         
-        raise NotImplementedError("Please implement the **evaluate** method.")
-    
-    def run(self) -> None:
+    def run(self, event: Event) -> Event:
         """
         Run the evaluator component.
 
@@ -50,8 +43,14 @@ class Evaluator(MLFlowComponentABC, OutputMixin):
             log_system_metrics=True,
             nested=True,
         ):
-            evaluation_data = self.evaluate(self.outputs)
-            evaluation_results = EvaluatorDataModel(data=evaluation_data).data
+            
+            evaluator_event = self._handle(event)
+
+            evaluator_payload: EvaluatorPayload = evaluator_event.payload
+            event_type = EventType.EVALUATION_DONE
+            event.context.set("evaluator_payload", evaluator_payload)
+            evaluation_results = evaluator_payload.metrics
+
 
             self.register_model(model_name=self.registered_model_name, model_uri=self.model_uri)
             for metric_name, metric_value in evaluation_results.items():
@@ -77,7 +76,11 @@ class Evaluator(MLFlowComponentABC, OutputMixin):
                     archive_existing_versions_at_stage=False,
                 )
 
-            self.outputs: ComponentOutput = {"Evaluator": evaluation_results}
+            return Event(
+                type=event_type,
+                payload=evaluator_payload,
+                context=event.context,
+            )
     
     def _get_version_to_transition(
         self,

@@ -1,46 +1,23 @@
-from typing import Any, Dict
 from abc import abstractmethod
 
-from collie.abstract.mlflow import MLFlowComponentABC
-from collie._common.mixin import OutputMixin
-from collie._common.types import ComponentOutput
-from collie._common.decorator import dict_key_checker
+from collie.contracts.event import Event, _EventHandler
+from collie.contracts.mlflow import MLFlowComponentABC
+from collie._common.types import (
+    EventType,
+    TunerPayload,
+)
 
 
-class Tuner(MLFlowComponentABC, OutputMixin):
+class Tuner(_EventHandler, MLFlowComponentABC):
 
     def __init__(self) -> None:
         super().__init__()
         
     @abstractmethod
-    def tune(self) -> Dict[str, Any]:
-        raise NotImplementedError("Please implement the *tunel* method.")
+    def handle(self, event: Event) -> Event:
+        raise NotImplementedError("Please implement the **transform** method.")
     
-    @abstractmethod
-    def objective(
-        self, 
-        outputs: ComponentOutput,
-        params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Evaluate the objective function for hyperparameter tuning.
-
-        Args:
-            outputs (ComponentOutput): The output from the Transformer component.
-            params (Dict[str, Any]): A dictionary of hyperparameters to be used for training the model.
-
-        Returns:
-            Dict[str, Any]: A dictionary containing the negative average validation score as 'loss', 
-                            the hyperparameters used as 'params', and the status of the evaluation.
-        """
-        raise NotImplementedError("Please implement the **objective** method.")
-
-    @dict_key_checker(["loss", "params", "status"])
-    def _objective(self, param):
-
-        return self.objective(self.outputs, param)
-    
-    def run(self) -> None:
+    def run(self, event: Event) -> None:
         """
         Run the hyperparameter tuner component.
 
@@ -54,8 +31,14 @@ class Tuner(MLFlowComponentABC, OutputMixin):
             log_system_metrics=True,
             nested=True,
         ):
-            hyperparameters = self.tune()
+            tuner_event = self._handle(event)
 
-            self.outputs: ComponentOutput = {
-                "Tuner": hyperparameters,
-            }
+            tuner_payload: TunerPayload = tuner_event.payload
+            event_type = EventType.TUNING_DONE
+            event.context.set("tuner_payload", tuner_payload)
+
+            return Event(
+                type=event_type,
+                payload=tuner_payload,
+                context=event.context
+            )

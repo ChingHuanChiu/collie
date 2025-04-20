@@ -48,3 +48,71 @@ class XGBTuner(Tuner):
         best_params = fmin(fn=self._objective, space=self.space, algo=tpe.suggest, max_evals=self.max_evals)
 
         return best_params
+    
+
+
+
+
+    from abc import abstractmethod
+
+from collie.contracts.event import Event, EventHandler
+from collie.contracts.mlflow import MLFlowComponentABC
+from collie._common.decorator import type_checker
+from collie._common.types import (
+    EventType,
+    TunerPayload,
+)
+
+
+# class Tuner(EventHandler, MLFlowComponentABC):
+
+#     def __init__(self) -> None:
+#         super().__init__()
+        
+#     abstractmethod
+#     def handle(self, event: Event) -> Event:
+#         raise NotImplementedError("Please implement the **transform** method.")
+    
+#     @abstractmethod
+#     def objective(
+#         self, 
+#         outputs: ComponentOutput,
+#         params: Dict[str, Any]
+#     ) -> Dict[str, Any]:
+#         """
+#         Evaluate the objective function for hyperparameter tuning.
+
+#         Args:
+#             outputs (ComponentOutput): The output from the Transformer component.
+#             params (Dict[str, Any]): A dictionary of hyperparameters to be used for training the model.
+
+#         Returns:
+#             Dict[str, Any]: A dictionary containing the negative average validation score as 'loss', 
+#                             the hyperparameters used as 'params', and the status of the evaluation.
+#         """
+#         raise NotImplementedError("Please implement the **objective** method.")
+
+#     @dict_key_checker(["loss", "params", "status"])
+#     def _objective(self, param):
+
+#         return self.objective(self.outputs, param)
+    
+#     def run(self) -> None:
+#         """
+#         Run the hyperparameter tuner component.
+
+#         This method starts a new MLflow run, tunes the hyperparameters,
+#         logs metrics, and sets the outputs.
+#         """
+
+#         with self.start_run(
+#             tags={"component": "Tuner"},
+#             run_name="Tuner",
+#             log_system_metrics=True,
+#             nested=True,
+#         ):
+#             hyperparameters = self.tune()
+
+#             self.outputs: ComponentOutput = {
+#                 "Tuner": hyperparameters,
+#             }

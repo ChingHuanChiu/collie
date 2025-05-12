@@ -4,9 +4,9 @@ from abc import abstractmethod
 import mlflow
 import xgboost as xgb
 
-from collie.trainer.trainer import Trainer
 from collie.contracts.event import Event
-from collie._common.types import TrainerPayload
+from collie.trainer.trainer import Trainer
+from collie._common.types import TrainerPayload, EventType
 from collie._common.decorator import type_checker
 
 
@@ -16,11 +16,7 @@ class XGBTrainer(Trainer):
         
         super().__init__()
 
-    @abstractmethod
-    def handle(self, event: Event) -> Event:
-        pass
-
-    def run(self, event: Event) -> xgb:
+    def run(self, event: Event) -> Event:
         """
         Train the XGBoost model.
 
@@ -32,7 +28,13 @@ class XGBTrainer(Trainer):
             Dict[str, Any]: A dictionary with a single key value pair where
                 the key is "model" and the value is the trained XGBoost model.
         """
-        mlflow.xgboost.autolog(
+        with self.start_run(
+            run_name="XGBTrainer", 
+            tags={"component": "XGBTrainer"},
+            log_system_metrics=True, 
+            nested=True
+        ):
+            mlflow.xgboost.autolog(
             importance_types=["gain", "cover", "weight"],
             log_input_examples=False,
             log_model_signatures=True,
@@ -45,13 +47,17 @@ class XGBTrainer(Trainer):
             registered_model_name=None,
             model_format="xgb",
             extra_tags=None
-        )
-        
-        trainer_event = super().run(event)
-        trainer_payload: TrainerPayload = trainer_event.payload
-        self._check_model_type(trainer_payload=trainer_payload)
+            )
+            trainer_event = self._handle(event)
+            trainer_payload = self._trainer_payload(trainer_event)
+            event_type = EventType.TRAINING_DONE
+            self._check_model_type(trainer_payload=trainer_payload)
 
-        return trainer_event
+            return Event(
+                type=event_type,
+                payload=trainer_payload,
+                context=event.context
+            )
     
     @type_checker((xgb.XGBClassifier, 
                  xgb.XGBModel, 
@@ -62,6 +68,6 @@ class XGBTrainer(Trainer):
                  "Model must be one of the following types: "
                  "XGBClassifier, XGBModel, XGBRanker, "
                  "XGBRegressor, XGBRFClassifier, or XGBRFRegressor.")
-    def _check_model_type(self, trainer_payload: TrainerPayload) -> None:
+    def _check_model_type(self, trainer_payload: TrainerPayload):
         model = trainer_payload.model
         return model

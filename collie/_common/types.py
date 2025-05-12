@@ -30,7 +30,9 @@ class EventType(Enum):
 
 
 class TransformerPayload(BaseModel):
-    data: Any
+    train_data: Any
+    validation_data: Any
+    test_data: Any
 
 
 class TrainerPayload(BaseModel):

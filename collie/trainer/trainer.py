@@ -13,10 +13,6 @@ class Trainer(_EventHandler, MLFlowComponentABC):
 
     def __init__(self) -> None:
         super().__init__()
-
-    @abstractmethod
-    def handle(self, event: Event) -> Event:
-        pass
     
     def run(self, event: Event) -> Event:
         """

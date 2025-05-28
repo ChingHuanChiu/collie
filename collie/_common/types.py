@@ -27,6 +27,7 @@ class EventType(Enum):
     TRAINING_DONE = auto()
     TUNING_DONE = auto()
     EVALUATION_DONE = auto()
+    PUSHER_DONE = auto()
     ERROR = auto()
 
 
@@ -49,3 +50,7 @@ class TunerPayload(BaseModel):
 class EvaluatorPayload(BaseModel):
     metrics: Dict[Literal["Production", "Experiment"], Any]
     greater_is_better: bool = True
+
+
+class PusherPayload(BaseModel):
+    model_uri: str

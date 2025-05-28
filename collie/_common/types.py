@@ -1,7 +1,8 @@
 from typing import (
     Dict, 
     Any,
-    Optional
+    Optional,
+    Literal
 )
 from enum import Enum, auto
 
@@ -46,4 +47,5 @@ class TunerPayload(BaseModel):
 
 
 class EvaluatorPayload(BaseModel):
-    metrics: Dict[str, Any]
+    metrics: Dict[Literal["Production", "Experiment"], Any]
+    greater_is_better: bool = True

@@ -17,51 +17,27 @@ import torch
 from collie.trainer.trainer import Trainer
 from collie._common.decorator import type_checker
 from collie._common.utils import get_logger
-from collie.common.pytorch.callback.callback import Callback, _CallbackManager
-from collie.common.pytorch.callback.model_checkpoint import ModelCheckpoint
-from collie.common.pytorch.callback.earlystop import EarlyStopping
+from collie.helper.pytorch.callback.callback import Callback, _CallbackManager
+from collie.helper.pytorch.callback.model_checkpoint import ModelCheckpoint
+from collie.helper.pytorch.callback.earlystop import EarlyStopping
 from collie.contracts.event import Event
-from collie._common.types import TrainerPayload
+from collie._common.types import TrainerPayload, TransformerPayload
 
 
 #TODO: Features to develop:
 # 1. Train with multiple GPUs 
-# 2.Override the `run` method, refer to XGBTrainer
-
-
 logger = get_logger()
 
 
-class _AbstractPytorchTrainer(Trainer):
-    @abstractmethod
-    def train_step(
-        self,
-        epoch_step: int,
-        batch_data: torch.Tensor,
-    ) ->  torch.Tensor: #loss
-
-        raise NotImplementedError("Please implement the *train_step* method.")
-        
-    def validation_step(
-        self,
-        epoch_step: int,
-        batch_data: torch.Tensor,
-    ) -> Optional[torch.Tensor]: #loss
-        
-        return None
-
-    @abstractmethod
-    def create_train_val_dataloader(
-        self, 
-        event: Event
-    ) -> Event:
-
-        raise NotImplementedError("Please implement the *create_train_val_dataloader* method.")
+class _AbstractPytorchTrainer:
     
     @abstractmethod
     def configure_optimizers(
         self
-    ) -> Tuple[torch.optim.Optimizer, Optional[torch.optim.lr_scheduler._LRScheduler]]:
+    ) -> Tuple[
+        torch.optim.Optimizer, 
+        Optional[torch.optim.lr_scheduler._LRScheduler]
+        ]:
         """
         Configure the optimizers and learning rate schedulers.
 
@@ -83,6 +59,22 @@ class _AbstractPytorchTrainer(Trainer):
         """
         raise NotImplementedError("Please implement the *configure_optimizers* method.")
     
+    @type_checker(
+        (DataLoader,),
+        "The train_data in TransformerPayload should be type of DataLoader in PytorchTrainer."
+    )
+    def get_train_dataloader(self, event: Event[TransformerPayload]) -> DataLoader:
+        transformer_payload = event.payload
+        return transformer_payload.train_data
+
+    @type_checker(
+        (DataLoader, None),
+        "The validation_data in TransformerPayload should be type of DataLoader in PytorchTrainer."
+    )
+    def get_val_dataloader(self, event: Event[TransformerPayload]) -> DataLoader:
+        transformer_payload = event.payload
+        return transformer_payload.validation_data
+
 
 class PytorchTrainer(_AbstractPytorchTrainer):
     def __init__(
@@ -125,11 +117,13 @@ class PytorchTrainer(_AbstractPytorchTrainer):
 
         self.model = self.model.to(self.device)
 
-    def handle(self, event: Event) -> Event: 
+    def run(
+        self, 
+        event: Event[TransformerPayload]
+    ) -> Event[TrainerPayload]:
 
-        transformer_payload = self._get_dataloader_event(event=event).payload
-        self.train_data_loader = transformer_payload.train_data
-        self.val_data_loader = transformer_payload.validation_data
+        self.train_data_loader = self.get_train_dataloader(event=event)
+        self.val_data_loader = self.get_val_dataloader(event=event)
 
         self.optimizer, self.lr_scheduler = self.configure_optimizers()
         
@@ -142,6 +136,7 @@ class PytorchTrainer(_AbstractPytorchTrainer):
 
         self.cb_manager.on_train_start(self)
         self.optimizer.zero_grad()
+        # TODO: the train loop is written by the user in handle method.
         for epoch_idx in tqdm(range(1, self.epochs + 1)):
             # Modified by Earlystop callback
             if self.should_stop:
@@ -222,7 +217,11 @@ class PytorchTrainer(_AbstractPytorchTrainer):
         self.log_metric("val_loss", epoch_val_loss, step=epoch_step)
         return epoch_val_loss
 
-    def _backward(self, loss: torch.Tensor, batch_idx: int) -> None:
+    def _backward(
+        self, 
+        loss: torch.Tensor, 
+        batch_idx: int
+    ) -> None:
 
         def should_step_optimizer(batch_idx: int) -> bool:
             return batch_idx % self.accumulate_grad_batches == 0 or batch_idx == len(self.train_data_loader)
@@ -268,21 +267,21 @@ class PytorchTrainer(_AbstractPytorchTrainer):
         self.log_metric("learning rate", lr, step=epoch_step)
  
     @type_checker((torch.Tensor,), 
-                  "The return type of *train_step* method must be 'Tensor'.")
-    def _get_train_step_result(self, epoch_step: int, batch_data: torch.Tensor):
+                  "The return type of *train_step* method must be 'Tensor'."
+    )
+    def _get_train_step_result(
+        self, 
+        epoch_step: int, 
+        batch_data: torch.Tensor
+    ):
 
         if self.use_amp:
             with autocast(device_type=self.device):
-                loss = self.train_step(epoch_step, batch_data)
+                loss = self.handle(epoch_step, batch_data)
         else:
-            loss = self.train_step(epoch_step, batch_data)
+            loss = self.handle(epoch_step, batch_data)
 
         return loss
-
-    @type_checker((Event,),
-                  "The teturn type of *create_torch_dataloader* method must be 'Event'")
-    def _get_dataloader_event(self, event: Event):
-        return self.create_train_val_dataloader(event)
     
     def _get_optimizers(
         self

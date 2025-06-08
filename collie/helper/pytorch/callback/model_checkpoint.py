@@ -5,7 +5,7 @@ import shutil
 
 import torch
 
-from collie.common.pytorch.callback.callback import Callback
+from collie.helper.pytorch.callback.callback import Callback
 from collie._common.utils import get_logger
 from collie import trainer
 

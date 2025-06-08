@@ -1,13 +1,12 @@
 from typing import Literal, List
-from abc import abstractmethod
 
-from collie.contracts.event import Event, _EventHandler
+from collie.contracts.event import Event, EventHandler
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.types import EventType, PusherPayload
 from collie._common.decorator import type_checker
 
 
-class Pusher(_EventHandler, MLFlowComponentABC):
+class Pusher(EventHandler, MLFlowComponentABC):
     def __init__(
         self,
         registered_model_name: str,

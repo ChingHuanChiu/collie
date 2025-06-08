@@ -1,6 +1,6 @@
 from typing import Optional
 
-from collie.common.pytorch.callback.callback import Callback
+from collie.helper.pytorch.callback.callback import Callback
 from collie import trainer
 from collie._common.utils import get_logger
 

@@ -1,10 +1,6 @@
-from typing import (
-    List,
-    Literal,
-)
-from abc import abstractmethod
+from typing import Literal
 
-from collie.contracts.event import Event, _EventHandler
+from collie.contracts.event import Event, EventHandler
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.types import (
     EventType,
@@ -13,7 +9,7 @@ from collie._common.types import (
 from collie._common.decorator import type_checker
 
 
-class Evaluator(_EventHandler, MLFlowComponentABC):
+class Evaluator(EventHandler, MLFlowComponentABC):
     
     def __init__(
         self, 
@@ -23,10 +19,6 @@ class Evaluator(_EventHandler, MLFlowComponentABC):
         super().__init__()
         self.registered_model_name = registered_model_name
         self.model_uri = model_uri
-
-    @abstractmethod
-    def handle(self, event: Event) -> Event:
-        pass
 
     def run(self, event: Event) -> Event:
         """

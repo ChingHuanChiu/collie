@@ -1,6 +1,4 @@
-from abc import abstractmethod
-
-from collie.contracts.event import Event, _EventHandler
+from collie.contracts.event import Event, EventHandler
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.types import (
     EventType,
@@ -9,14 +7,10 @@ from collie._common.types import (
 from collie._common.decorator import type_checker
 
 
-class Transformer(_EventHandler, MLFlowComponentABC):
+class Transformer(EventHandler, MLFlowComponentABC):
 
     def __init__(self) -> None:
         super().__init__()
-
-    @abstractmethod
-    def handle(self, event: Event) -> Event:
-        pass
     
     def run(self, event: Event) -> Event:
         """

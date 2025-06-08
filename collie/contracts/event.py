@@ -2,10 +2,14 @@ from typing import (
     Dict, 
     Any,
     Optional,
-    Union
+    Union,
+    Generic,
+    TypeVar
 )
+from abc import abstractmethod, ABC
 
 from pydantic import Field, BaseModel
+
 
 from collie._common.types import (
     EventType,
@@ -31,17 +35,16 @@ class PipelineContext:
         return self.data
     
 
+P = TypeVar("P")
 class Event(BaseModel):
     type: Optional[EventType] = None
-    payload: Union[
-        TransformerPayload, TrainerPayload, 
-        TunerPayload, EvaluatorPayload
-    ]
+    payload: P
     context: PipelineContext = Field(default_factory=PipelineContext)
 
 
-class _EventHandler:
+class EventHandler(ABC):
     
+    @abstractmethod
     def handle(self, event: Event) -> Event:
         raise NotImplementedError()
     

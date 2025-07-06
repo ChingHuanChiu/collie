@@ -10,6 +10,5 @@ It is expected to include the following components:
 
 
 ## TODO:
-1. Use the MLFLOW to record the PytorchTrainer training metadata.(trainer)
-2. Develope the PytorchTuner
-3. Develope the Deployer.
+1. Complete the Puser , the model uri need to be handled.
+2. Finish the airflow.py

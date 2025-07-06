@@ -29,6 +29,11 @@ class Tuner(EventHandler, MLFlowComponentABC):
             tuner_event = self._handle(event)
 
             tuner_payload = self._tuner_payload(tuner_event)
+            hyperparameters = tuner_payload.hyperparameters
+
+            for param_name, param_value in hyperparameters.items():
+                self.log_param(param_name, param_value)
+
             event_type = EventType.TUNING_DONE
             # event.context.set("tuner_payload", tuner_payload)
 

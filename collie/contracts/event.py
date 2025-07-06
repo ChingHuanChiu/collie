@@ -39,7 +39,7 @@ P = TypeVar("P")
 class Event(BaseModel):
     type: Optional[EventType] = None
     payload: P
-    context: PipelineContext = Field(default_factory=PipelineContext)
+    context: PipelineContext = Field(default_factory=PipelineContext) #TODO: remove this field because the artifact is used
 
 
 class EventHandler(ABC):

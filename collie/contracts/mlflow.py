@@ -15,6 +15,9 @@ import mlflow
 import PIL
 from mlflow.tracking import MlflowClient
 from mlflow import ActiveRun
+import xgboost as xgb
+import sklearn.base
+import torch.nn as nn
 
 
 class MLFlowComponentABC(metaclass=ABCMeta):
@@ -174,26 +177,26 @@ class MLFlowComponentABC(metaclass=ABCMeta):
         mlflow.log_dict(dictionary, artifact_path, **kwargs)
 
     def log_model(
-        self,
-        model: Any,
-        model_type: Literal["xgb", "pt", "sklearn"],
-        artifact_path: str = "model",
+        self, 
+        model: Any, 
+        artifact_path: str, 
         **kwargs: Any
     ) -> None:
         """
-        Logs a model with the given artifact path and keyword arguments.
-        """
+        Automatically detects model type and logs using appropriate MLflow flavor.
 
-        if model_type == "sklearn":
+        Supports: sklearn, xgboost, pytorch
+        """
+        if isinstance(model, sklearn.base.BaseEstimator):
             mlflow.sklearn.log_model(model, artifact_path, **kwargs)
-        elif model_type == "xgb":
+        elif isinstance(model, xgb.Booster) or isinstance(model, xgb.XGBModel):
             mlflow.xgboost.log_model(model, artifact_path, **kwargs)
-        elif model_type == "pt":
+        elif isinstance(model, nn.Module):
             mlflow.pytorch.log_model(model, artifact_path, **kwargs)
         else:
             raise ValueError(
-                f"Unexpected model type '{model_type}'. "
-                "Expected one of ['xgb', 'pt', 'sklearn']"
+                f"Unsupported model type: {type(model)}. "
+                "Only sklearn, xgboost, and pytorch are supported."
             )
 
     def transition_model_version(

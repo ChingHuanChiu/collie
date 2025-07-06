@@ -5,8 +5,9 @@ from typing import (
     Literal
 )
 from enum import Enum, auto
-
 from pydantic import BaseModel
+
+import pandas as pd
 
 from collie.transform.transform import Transformer
 from collie.trainer.trainer import Trainer
@@ -23,6 +24,7 @@ class CollieComponents(Enum):
 
 
 class EventType(Enum):
+    INITAILIZE = auto()
     DATA_READY = auto()
     TRAINING_DONE = auto()
     TUNING_DONE = auto()
@@ -31,16 +33,29 @@ class EventType(Enum):
     ERROR = auto()
 
 
+class TransformerArtifactPath(Enum):
+    train_data = "Transformer/train"
+    validation_data = "Transformer/validation"
+    test_data = "Transformer/test"
+
+
+class TrainerArtifactPath(Enum):
+    model = "Trainer/model"
+
+
+class LocalArtifactDir(Enum):
+    artifacts = "artifacts"
+
 class TransformerPayload(BaseModel):
-    train_data: Any
-    validation_data: Any = None
-    test_data: Any = None
+    train_data: Optional[pd.DataFrame] = None
+    validation_data: Optional[pd.DataFrame]  = None
+    test_data: Optional[pd.DataFrame]  = None
 
 
 class TrainerPayload(BaseModel):
-    model: Any
-    train_loss: float
-    val_loss: Optional[float]
+    model: Any = None
+    train_loss: Optional[float] = None
+    val_loss: Optional[float] = None
 
 
 class TunerPayload(BaseModel):

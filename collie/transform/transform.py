@@ -1,8 +1,12 @@
+import pandas as pd
+
 from collie.contracts.event import Event, EventHandler
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.types import (
     EventType,
     TransformerPayload,
+    TransformerArtifactPath,
+    LocalArtifactDir
 )
 from collie._common.decorator import type_checker
 
@@ -31,6 +35,17 @@ class Transformer(EventHandler, MLFlowComponentABC):
             event_type = EventType.DATA_READY
             # event.context.set("transformer_payload", transformer_payload)
 
+            data = transformer_payload.model_dump()
+            for data_name, data in data.items():
+                if data:
+                    artifact_path = TransformerArtifactPath[data_name].value
+                    local_path = LocalArtifactDir.artifacts.value
+                    self.log_data(
+                        data=data, 
+                        local_path=f"{local_path}/Transformer/{data_name}.csv", 
+                        artifact_path=artifact_path
+                    )
+
             return Event(
                 type=event_type,
                 payload=transformer_payload,
@@ -43,3 +58,16 @@ class Transformer(EventHandler, MLFlowComponentABC):
     def _transformer_payload(self, event: Event) -> TransformerPayload: 
 
         return event.payload
+    
+    def log_data(
+            self, 
+            data: pd.DataFrame,
+            local_path: str,
+            artifact_path: TransformerArtifactPath
+        ) -> None:
+        
+        data.to_csv(local_path, index=False)
+        self.log_artifact(
+            local_path=local_path, 
+            artifact_path=artifact_path
+        )

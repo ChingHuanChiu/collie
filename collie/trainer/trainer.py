@@ -3,6 +3,7 @@ from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.types import (
     EventType,
     TrainerPayload,
+    TrainerArtifactPath
 )
 from collie._common.decorator import type_checker
 
@@ -29,6 +30,12 @@ class Trainer(EventHandler, MLFlowComponentABC):
 
             trainer_payload = self._trainer_payload(trainer_event)
             event_type = EventType.TRAINING_DONE
+            
+            model = trainer_payload.model
+            self.log_model(
+                model=model, 
+                artifact_path=TrainerArtifactPath.model
+            )
             # event.context.set("trainer_payload", trainer_payload)
 
             return Event(

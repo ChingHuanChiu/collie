@@ -25,7 +25,8 @@ class AirflowOrchestrator(OrchestratorABC):
             CollieComponents.TRAINER.value, 
             CollieComponents.TRANSFORMER.value,
             CollieComponents.TUNER.value,
-            CollieComponents.EVALUATOR.value
+            CollieComponents.EVALUATOR.value,
+            CollieComponents.PUSHER.value
         ],
         mlflow_tags: Optional[Dict[str, str]] = None,
         experiment_name: Optional[str] = None,
@@ -78,12 +79,26 @@ class AirflowOrchestrator(OrchestratorABC):
 
             def _component_runner(comp):
                 def _run(**context):
-                    ti = context["ti"]
-                    # incoming_event = ti.xcom_pull(task_ids=context["params"]["upstream"], key="event")
-                    # TODO: the event data is from using mlflow.download_artifacts or download_model
-                    incoming_event = ...
+                    # ti = context["ti"]
+                    if isinstance(comp, CollieComponents.TRANSFORMER.value): 
+                        # TODO: the event data is from using mlflow.download_artifacts or download_model
+                        incoming_event = ...
+                    elif isinstance(comp, CollieComponents.TUNER.value):
+                        # TODO: the event data is from using mlflow.download_artifacts or download_model
+                        ...
+                    elif isinstance(comp, CollieComponents.TRAINER.value):
+                        # TODO: the event data is from using mlflow.download_artifacts or download_model
+                        ...
+                    elif isinstance(comp, CollieComponents.EVALUATOR.value):
+                        # TODO: the event data is from using mlflow.download_artifacts or download_model
+                        ...
+                    elif isinstance(comp, CollieComponents.PUSHER.value):
+                        # TODO: the event data is from using mlflow.download_artifacts or download_model
+                        ...
+                    else:
+                        raise ValueError(f"Unsupported component type: {type(comp)}")
+                  
                     new_event = comp.run(incoming_event)
-                    ti.xcom_push(key="event", value=new_event)
                 return _run
 
             component_task = PythonOperator(

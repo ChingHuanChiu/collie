@@ -13,6 +13,7 @@ from collie.transform.transform import Transformer
 from collie.trainer.trainer import Trainer
 from collie.tuner.tuner import Tuner
 from collie.evaluator.evaluator import Evaluator
+from collie.pusher.pusher import Pusher
 
 
 class CollieComponents(Enum):
@@ -21,6 +22,7 @@ class CollieComponents(Enum):
     TRANSFORMER = Transformer
     TUNER = Tuner 
     EVALUATOR = Evaluator
+    PUSHER = Pusher
 
 
 class EventType(Enum):

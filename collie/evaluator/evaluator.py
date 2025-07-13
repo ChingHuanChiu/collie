@@ -7,6 +7,7 @@ from collie._common.types import (
     EvaluatorPayload
 )
 from collie._common.decorator import type_checker
+from collie._common.types import EvaluatorArtifactPath
 
 
 class Evaluator(EventHandler, MLFlowComponentABC):
@@ -48,6 +49,10 @@ class Evaluator(EventHandler, MLFlowComponentABC):
 
             for metric_name, metric_value in payload.metrics.items():
                 self.log_metric(metric_name, metric_value)
+            self.log_dict(
+                dictionary=payload.model_dump(), 
+                artifact_path=self.artifact_path
+            )
 
             experiment_score = payload.metrics.get("Experiment")
             production_score = payload.metrics.get("Production")
@@ -103,3 +108,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
     @type_checker((EvaluatorPayload,), "EvaluatorPayload must be of type EvaluatorPayload.")
     def _get_evaluator_payload(self, event: Event) -> EvaluatorPayload: 
         return event.payload
+    
+    @property
+    def artifact_path(self) -> str:
+        return EvaluatorArtifactPath.metrics

@@ -2,7 +2,11 @@ from typing import Literal, List
 
 from collie.contracts.event import Event, EventHandler
 from collie.contracts.mlflow import MLFlowComponentABC
-from collie._common.types import EventType, PusherPayload
+from collie._common.types import (
+    EventType, 
+    PusherPayload, 
+    PusherArtifactPath
+)
 from collie._common.decorator import type_checker
 
 
@@ -39,7 +43,7 @@ class Pusher(EventHandler, MLFlowComponentABC):
 
             return Event(
                 type=EventType.PUSHER_DONE,
-                payload={"version_pushed": version, "stage": self.target_stage},
+                payload=payload,
                 context=event.context,
             )
 
@@ -53,3 +57,7 @@ class Pusher(EventHandler, MLFlowComponentABC):
     @type_checker((PusherPayload,), "PusherPayload must be of type PusherPayload.")
     def _get_evaluator_payload(self, event: Event) -> PusherPayload:
         return event.payload
+    
+    @property
+    def artifact_path(self) -> str:
+        return PusherArtifactPath.model_uri

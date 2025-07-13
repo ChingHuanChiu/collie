@@ -1,33 +1,48 @@
 from typing import (
     Optional,
     Dict,
-    Union
+    Union,
+    Any
 )
 from datetime import datetime
+import io
+
+import pandas as pd
 
 
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 
 from collie.contracts.event import Event
-from collie._common.types import EventType
-from collie.contracts.orchestrator import OrchestratorABC
-from collie._common.types import CollieComponents
+from collie.contracts.orchestrator import OrchestratorBase
+from collie._common.types import (
+    CollieComponentType,
+    CollieComponents,
+    TransformerPayload,
+    TrainerPayload,
+    TunerPayload,
+    EvaluatorPayload,
+    PusherPayload,
+    EventType,
+    TransformerArtifactPath,
+    TrainerArtifactPath,
+    TunerArtifactPath,
+    EvaluatorArtifactPath,
+    PusherArtifactPath
+)
+from collie._common.utils import get_logger
 
 
-class AirflowOrchestrator(OrchestratorABC):
+logger = get_logger()
+
+
+class AirflowOrchestrator(OrchestratorBase):
 
     def __init__(
         self,
         dag_id: str,
         tracking_uri: str,
-        components: Union[
-            CollieComponents.TRAINER.value, 
-            CollieComponents.TRANSFORMER.value,
-            CollieComponents.TUNER.value,
-            CollieComponents.EVALUATOR.value,
-            CollieComponents.PUSHER.value
-        ],
+        components: CollieComponentType,
         mlflow_tags: Optional[Dict[str, str]] = None,
         experiment_name: Optional[str] = None,
         description: Optional[str] = None,
@@ -54,7 +69,6 @@ class AirflowOrchestrator(OrchestratorABC):
             catchup=False,
         )
 
-
     def run_pipeline(self) -> DAG:
         
         def start(**context):
@@ -77,28 +91,67 @@ class AirflowOrchestrator(OrchestratorABC):
             
             component.mlflow_client = self.mlflow_client
 
-            def _component_runner(comp):
+            def _component_runner(component):
                 def _run(**context):
-                    # ti = context["ti"]
-                    if isinstance(comp, CollieComponents.TRANSFORMER.value): 
-                        # TODO: the event data is from using mlflow.download_artifacts or download_model
-                        incoming_event = ...
-                    elif isinstance(comp, CollieComponents.TUNER.value):
-                        # TODO: the event data is from using mlflow.download_artifacts or download_model
-                        ...
-                    elif isinstance(comp, CollieComponents.TRAINER.value):
-                        # TODO: the event data is from using mlflow.download_artifacts or download_model
-                        ...
-                    elif isinstance(comp, CollieComponents.EVALUATOR.value):
-                        # TODO: the event data is from using mlflow.download_artifacts or download_model
-                        ...
-                    elif isinstance(comp, CollieComponents.PUSHER.value):
-                        # TODO: the event data is from using mlflow.download_artifacts or download_model
-                        ...
+                    # TODO: Deal with the transformer component
+                    ... 
+                    if self.is_transformer_event_flavor(component): 
+                        transformer_payload = dict()
+                        artifact_path: Dict[str, str] = TransformerArtifactPath.model_dump()
+                        for data_type, data_artifact_path in artifact_path.items():
+                            data_str = self.load_text(data_artifact_path)
+                            transformer_payload[data_type] = pd.read_csv(io.StringIO(data_str))
+
+                        transformer_event = Event(
+                            type=EventType.DATA_READY,
+                            payload=transformer_payload
+                        )
+
+                        incoming_event = transformer_event
+
+                    elif self.is_tuner_event_flavor(component):
+                        tuner_payload = dict()
+                        artifact_path: str = TunerArtifactPath.hyperparameters
+                        hyperparameters: Dict[str, Any] = self.load_dict(artifact_path)
+                        # TODO: deal with the key using the enum method
+                        tuner_payload["hyperparameters"] = hyperparameters["hyperparameters"]
+
+                        tuner_event = Event(
+                            type=EventType.DATA_READY,
+                            payload=tuner_payload
+                        )
+                        
+                        incoming_event = tuner_event
+                    elif self.is_trainer_event_flavor(component):
+                        trainer_payload = dict()
+                        artifact_path: str = TrainerArtifactPath.model
+                        model = self.load_model(artifact_path)
+                        # TODO: deal with the key using the enum method
+                        trainer_payload["model"] = model
+
+                        trainer_event = Event(
+                            type=EventType.DATA_READY,
+                            payload=trainer_payload
+                        )
+                        incoming_event = trainer_event
+                    elif self.is_evaluator_event_flavor(component):
+                        eval_payload = dict()
+                        artifact_path: str = EvaluatorArtifactPath.metrics
+                        metrics = self.load_dict(artifact_path)
+                        # TODO: deal with the key using the enum method
+                        eval_payload["metrics"] = metrics["metrics"]
+
+                        eval_event = Event(
+                            type=EventType.DATA_READY,
+                            payload=eval_payload
+                        )
+                        incoming_event = eval_event
                     else:
-                        raise ValueError(f"Unsupported component type: {type(comp)}")
+                        logger.WARNING(f"The current component type is passed because it is not supported: {type(component)}")
+                        pass
+
+                    _ = component.run(incoming_event)
                   
-                    new_event = comp.run(incoming_event)
                 return _run
 
             component_task = PythonOperator(

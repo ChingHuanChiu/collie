@@ -5,6 +5,7 @@ from collie._common.types import (
     TunerPayload,
 )
 from collie._common.decorator import type_checker
+from collie._common.types import TunerArtifactPath
 
 
 class Tuner(EventHandler, MLFlowComponentABC):
@@ -29,13 +30,14 @@ class Tuner(EventHandler, MLFlowComponentABC):
             tuner_event = self._handle(event)
 
             tuner_payload = self._tuner_payload(tuner_event)
-            hyperparameters = tuner_payload.hyperparameters
+            hyperparameters = tuner_payload.model_dump()
 
-            for param_name, param_value in hyperparameters.items():
-                self.log_param(param_name, param_value)
+            self.log_dict(
+                dictionary=hyperparameters, 
+                artifact_path=self.artifact_path
+            )
 
             event_type = EventType.TUNING_DONE
-            # event.context.set("tuner_payload", tuner_payload)
 
             return Event(
                 type=event_type,
@@ -49,3 +51,8 @@ class Tuner(EventHandler, MLFlowComponentABC):
     def _tuner_payload(self, event: Event) -> TunerPayload: 
 
         return event.payload
+    
+
+    @property
+    def artifact_path(self) -> str:
+        return TunerArtifactPath.hyperparameters

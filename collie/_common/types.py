@@ -2,7 +2,8 @@ from typing import (
     Dict, 
     Any,
     Optional,
-    Literal
+    Literal,
+    Union
 )
 from enum import Enum, auto
 from pydantic import BaseModel
@@ -25,6 +26,11 @@ class CollieComponents(Enum):
     PUSHER = Pusher
 
 
+CollieComponentType = Union[
+    Trainer, Transformer, Tuner, Evaluator, Pusher
+]
+
+
 class EventType(Enum):
     INITAILIZE = auto()
     DATA_READY = auto()
@@ -35,18 +41,27 @@ class EventType(Enum):
     ERROR = auto()
 
 
-class TransformerArtifactPath(Enum):
-    train_data = "Transformer/train"
-    validation_data = "Transformer/validation"
-    test_data = "Transformer/test"
+class TransformerArtifactPath(BaseModel):
+    train_data: str = "Transformer/train"
+    validation_data: str = "Transformer/validation"
+    test_data: str = "Transformer/test"
 
 
-class TrainerArtifactPath(Enum):
-    model = "Trainer/model"
+class TunerArtifactPath(BaseModel):
+    hyperparameters: str = "Tuner/hyperparameters"
 
 
-class LocalArtifactDir(Enum):
-    artifacts = "artifacts"
+class TrainerArtifactPath(BaseModel):
+    model: str = "Trainer/model"
+
+
+class EvaluatorArtifactPath(BaseModel):
+    metrics: str = "Evaluator/metrics"
+
+
+class PusherArtifactPath(BaseModel):
+    model_uri: str = "Pusher/model_uri"
+
 
 class TransformerPayload(BaseModel):
     train_data: Optional[pd.DataFrame] = None

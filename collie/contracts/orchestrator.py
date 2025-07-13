@@ -8,20 +8,15 @@ from abc import abstractmethod
 
 from mlflow.tracking import MlflowClient
 
-from collie._common.types import CollieComponents
+from collie._common.types import CollieComponentType, CollieComponents
 from collie.contracts.mlflow import MLFlowComponentABC
 
 
-class OrchestratorABC(MLFlowComponentABC):
+class OrchestratorBase(MLFlowComponentABC):
 
     def __init__(
         self,
-        components: Union[
-            CollieComponents.TRAINER.value, 
-            CollieComponents.TRANSFORMER.value,
-            CollieComponents.TUNER.value,
-            CollieComponents.EVALUATOR.value
-        ],
+        components: CollieComponentType,
         tracking_uri: Optional[str] = None,
         mlflow_tags: Optional[Dict[str, str]] = None,
         experiment_name: Optional[str] = None,
@@ -29,7 +24,9 @@ class OrchestratorABC(MLFlowComponentABC):
     ) -> None:
 
         super().__init__()
+        #TODO: make sure that the components are the right order of the pipeline
         self.components = components
+        self.tuner_is_exist = any(isinstance(component, CollieComponents.TUNER.value) for component in self.components)
         self.mlflow_tags = mlflow_tags
         self.tracking_uri = tracking_uri
         self.description = description
@@ -58,3 +55,25 @@ class OrchestratorABC(MLFlowComponentABC):
         ):
 
             self.run_pipeline()
+
+    def is_transformer_event_flavor(self, component: CollieComponentType) -> bool:
+        if isinstance(component, CollieComponents.TRAINER.value) and not self.tuner_is_exist:
+            return True
+        if isinstance(component, CollieComponents.TUNER.value):
+            return True
+        return False
+
+    def is_tuner_event_flavor(self, component: CollieComponentType) -> bool:
+        if isinstance(component, CollieComponents.TRAINER.value):
+            return True
+        return False
+    
+    def is_trainer_event_flavor(self, component: CollieComponentType) -> bool:
+        if isinstance(component, CollieComponents.EVALUATOR.value):
+            return True
+        return False
+
+    def is_evaluator_event_flavor(self, component: CollieComponentType) -> bool:
+        if isinstance(component, CollieComponents.PUSHER.value):
+            return True
+        return False

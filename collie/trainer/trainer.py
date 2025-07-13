@@ -34,9 +34,8 @@ class Trainer(EventHandler, MLFlowComponentABC):
             model = trainer_payload.model
             self.log_model(
                 model=model, 
-                artifact_path=TrainerArtifactPath.model
+                artifact_path=self.artifact_path
             )
-            # event.context.set("trainer_payload", trainer_payload)
 
             return Event(
                 type=event_type,
@@ -50,3 +49,7 @@ class Trainer(EventHandler, MLFlowComponentABC):
     def _trainer_payload(self, event: Event) -> TrainerPayload: 
 
         return event.payload
+    
+    @property
+    def artifact_path(self):
+        return TrainerArtifactPath.model

@@ -19,6 +19,8 @@ import xgboost as xgb
 import sklearn.base
 import torch.nn as nn
 
+from collie._common.mlflow_model_io.model_io import MLflowModelIO
+
 
 class MLFlowComponentABC(metaclass=ABCMeta):
 
@@ -159,6 +161,12 @@ class MLFlowComponentABC(metaclass=ABCMeta):
         """
         mlflow.log_text(text, artifact_path, **kwargs)
 
+    def load_text(
+        self, 
+        artifact_path: str
+    ) -> str:
+        return mlflow.artifacts.load_text(artifact_path)
+
     def log_dict(
         self,
         dictionary: Dict[str, Any], 
@@ -176,28 +184,30 @@ class MLFlowComponentABC(metaclass=ABCMeta):
         """
         mlflow.log_dict(dictionary, artifact_path, **kwargs)
 
+    def load_dict(
+        self, 
+        artifact_path: str
+    ) -> Dict[str, Any]:
+        return mlflow.artifacts.load_dict(artifact_path)
+
     def log_model(
         self, 
         model: Any, 
         artifact_path: str, 
-        **kwargs: Any
     ) -> None:
-        """
-        Automatically detects model type and logs using appropriate MLflow flavor.
+       
+        model_io = MLflowModelIO()
 
-        Supports: sklearn, xgboost, pytorch
-        """
-        if isinstance(model, sklearn.base.BaseEstimator):
-            mlflow.sklearn.log_model(model, artifact_path, **kwargs)
-        elif isinstance(model, xgb.Booster) or isinstance(model, xgb.XGBModel):
-            mlflow.xgboost.log_model(model, artifact_path, **kwargs)
-        elif isinstance(model, nn.Module):
-            mlflow.pytorch.log_model(model, artifact_path, **kwargs)
-        else:
-            raise ValueError(
-                f"Unsupported model type: {type(model)}. "
-                "Only sklearn, xgboost, and pytorch are supported."
-            )
+        model_io.log_model(model, artifact_path)
+    
+    def load_model(
+        self, 
+        artifact_path: str
+    ) -> Any:
+        
+        model_io = MLflowModelIO()
+        run_id = mlflow.active_run().info.run_id
+        return model_io.load_model(run_id, artifact_path)
 
     def transition_model_version(
         self,

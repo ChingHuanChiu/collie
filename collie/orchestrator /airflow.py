@@ -76,7 +76,8 @@ class AirflowOrchestrator(OrchestratorBase):
                 type=EventType.INITAILIZE, 
                 payload=None
             )
-            context["ti"].xcom_push(key="event", value=initial_event)
+
+            return initial_event
 
         start_task = PythonOperator(
             task_id="start",
@@ -93,8 +94,15 @@ class AirflowOrchestrator(OrchestratorBase):
 
             def _component_runner(component):
                 def _run(**context):
-                    # TODO: Deal with the transformer component
-                    ... 
+
+                    if self.is_initialize_event_flavor(component):
+                        initialize_event = Event(
+                            type=EventType.INITIALIZE,
+                            payload=None
+                        )
+
+                        incoming_event = initialize_event
+
                     if self.is_transformer_event_flavor(component): 
                         transformer_payload = dict()
                         artifact_path: Dict[str, str] = TransformerArtifactPath.model_dump()
@@ -164,20 +172,3 @@ class AirflowOrchestrator(OrchestratorBase):
             previous_task >> component_task
             previous_task = component_task
         return self.dag
-    
-
-        # self.set_tracking_uri(self.tracking_uri)
-        # self.set_experiment(self.experiment_name)
-        # experiment_id = self.get_exp_id(self.experiment_name)
-
-        # with self.start_run(
-        #     tags={"component": "LocalPipeline"}, 
-        #     run_name="Pipeline", 
-        #     description=self.description, 
-        #     experiment_id=experiment_id
-        # ):
-
-        #     for component in self.components:
-        #         component.mlflow_client = self.mlflow_client
-        #         _ = component.run()
-        #     component.clear()

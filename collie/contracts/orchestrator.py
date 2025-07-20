@@ -56,6 +56,11 @@ class OrchestratorBase(MLFlowComponentABC):
 
             self.run_pipeline()
 
+    def is_initialize_event_flavor(self, component: CollieComponentType) -> bool:
+        if isinstance(component, CollieComponents.TRANSFORMER.value):
+            return True
+        return False
+
     def is_transformer_event_flavor(self, component: CollieComponentType) -> bool:
         if isinstance(component, CollieComponents.TRAINER.value) and not self.tuner_is_exist:
             return True

@@ -97,7 +97,7 @@ class AirflowOrchestrator(OrchestratorBase):
 
                     if self.is_initialize_event_flavor(component):
                         initialize_event = Event(
-                            type=EventType.INITIALIZE,
+                            type=EventType.INITAILIZE ,
                             payload=None
                         )
 

@@ -2,8 +2,6 @@ from typing import (
     Dict, 
     Any,
     Optional,
-    Union,
-    Generic,
     TypeVar
 )
 from abc import abstractmethod, ABC
@@ -11,13 +9,7 @@ from abc import abstractmethod, ABC
 from pydantic import Field, BaseModel
 
 
-from collie._common.types import (
-    EventType,
-    TransformerPayload,
-    TrainerPayload,
-    TunerPayload,
-    EvaluatorPayload
-)
+from collie._common.types import EventType
 from collie._common.decorator import type_checker
 
 

@@ -6,7 +6,7 @@ source ~/.zshrc
 
 
 # Define variables
-CONDA_ENV="collie"
+CONDA_ENV="airflow"
 AIRFLOW_HOME="$HOME/airflow"
 
 # Activate the Conda environment
@@ -18,12 +18,12 @@ echo "📦 Upgrading pip..."
 pip install --upgrade pip
 
 # Install the latest MLflow
-echo "📦 Installing the latest MLflow..."
-pip install mlflow
+# echo "📦 Installing the latest MLflow..."
+# pip install mlflow
 
 # Install the latest Apache Airflow
 echo "📦 Installing the latest Apache Airflow..."
-pip install apache-airflow==3.0.3
+pip install apache-airflow
 
 # Set AIRFLOW_HOME
 echo "📂 Setting AIRFLOW_HOME to $AIRFLOW_HOME"
@@ -48,12 +48,12 @@ airflow users create \
   --role Admin \
   --email stevenchiou8@gmail.com
 
-cat <<'EOF' > gunicorn.conf.py
-workers = 2
-timeout = 120
-graceful_timeout = 120
-loglevel = 'info'
-EOF
+# cat <<'EOF' > gunicorn.conf.py
+# workers = 2
+# timeout = 120
+# graceful_timeout = 120
+# loglevel = 'info'
+# EOF
 
 
 

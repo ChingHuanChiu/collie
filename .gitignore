@@ -1,4 +1,5 @@
 .DS_Store
 test.ipynb
 __pycache__
-
+*.db
+mlruns/

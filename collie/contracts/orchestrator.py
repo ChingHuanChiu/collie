@@ -1,5 +1,4 @@
 from typing import (
-    Union, 
     Optional,
     Dict, 
     Any
@@ -8,6 +7,7 @@ from abc import abstractmethod
 
 from mlflow.tracking import MlflowClient
 
+from collie.contracts.event import Event
 from collie._common.types import CollieComponentType, CollieComponents
 from collie.contracts.mlflow import MLFlowComponentABC
 
@@ -38,10 +38,10 @@ class OrchestratorBase(MLFlowComponentABC):
         self.mlflow_client = MlflowClient(tracking_uri=self.tracking_uri)
 
     @abstractmethod
-    def run_pipeline(self) -> Any:
+    def orchestrate_pipeline(self) -> Any:
         raise NotImplementedError
 
-    def run(self) -> None:
+    def run(self) -> Any:
 
         self.set_tracking_uri(self.tracking_uri)
         self.set_experiment(self.experiment_name)
@@ -54,7 +54,8 @@ class OrchestratorBase(MLFlowComponentABC):
             experiment_id=experiment_id
         ):
 
-            self.run_pipeline()
+            res = self.orchestrate_pipeline()
+        return res
 
     def is_initialize_event_flavor(self, component: CollieComponentType) -> bool:
         if isinstance(component, CollieComponents.TRANSFORMER.value):
@@ -82,3 +83,10 @@ class OrchestratorBase(MLFlowComponentABC):
         if isinstance(component, CollieComponents.PUSHER.value):
             return True
         return False
+    
+    def start_event(self) -> Event:
+        """Initialize pipeline with an event."""
+        return Event(
+            type=EventType.INITAILIZE,
+            payload=None
+        )

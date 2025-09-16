@@ -21,7 +21,7 @@ from collie.helper.pytorch.callback.callback import Callback, _CallbackManager
 from collie.helper.pytorch.callback.model_checkpoint import ModelCheckpoint
 from collie.helper.pytorch.callback.earlystop import EarlyStopping
 from collie.contracts.event import Event
-from collie._common.types import TrainerPayload, TransformerPayload
+from collie.core.types import TrainerPayload, TransformerPayload
 
 
 #TODO: Features to develop:

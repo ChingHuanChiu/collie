@@ -1,11 +1,14 @@
-from collie.contracts.event import Event, EventHandler
-from collie.contracts.mlflow import MLFlowComponentABC
-from collie._common.types import (
-    EventType,
-    TunerPayload,
+from collie.contracts.event import (
+    Event, 
+    EventHandler, 
+    EventType
 )
+from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.decorator import type_checker
-from collie._common.types import TunerArtifactPath
+from collie.core.models import (
+    TunerArtifactPath,
+    TunerPayload
+)
 
 
 class Tuner(EventHandler, MLFlowComponentABC):

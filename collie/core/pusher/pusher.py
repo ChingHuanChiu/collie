@@ -1,10 +1,13 @@
 from typing import Literal, List
 
-from collie.contracts.event import Event, EventHandler
+from collie.contracts.event import (
+    Event, 
+    EventHandler, 
+    EventType
+)
 from collie.contracts.mlflow import MLFlowComponentABC
-from collie._common.types import (
-    EventType, 
-    PusherPayload, 
+from collie.core.models import (
+    PusherPayload,
     PusherArtifactPath
 )
 from collie._common.decorator import type_checker

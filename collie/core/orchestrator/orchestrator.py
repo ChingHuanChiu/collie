@@ -6,15 +6,15 @@ from typing import (
 import io
 import pandas as pd
 
-from collie.contracts.event import Event
+from collie.contracts.event import Event, EventType
 from collie.contracts.orchestrator import OrchestratorBase
-from collie._common.types import (
-    CollieComponentType,
-    TransformerArtifactPath,
+from collie.core.types import CollieComponentType
+from collie.core.models import (
     TrainerArtifactPath,
+    TransformerArtifactPath,
     TunerArtifactPath,
     EvaluatorArtifactPath,
-    EventType
+    PusherArtifactPath
 )
 from collie._common.utils import get_logger
 

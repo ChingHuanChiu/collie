@@ -3,42 +3,10 @@ from typing import (
     Any,
     Optional,
     Literal,
-    Union
 )
-from enum import Enum, auto
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 import pandas as pd
-
-from collie.transform.transform import Transformer
-from collie.trainer.trainer import Trainer
-from collie.tuner.tuner import Tuner
-from collie.evaluator.evaluator import Evaluator
-from collie.pusher.pusher import Pusher
-
-
-class CollieComponents(Enum):
-
-    TRAINER = Trainer
-    TRANSFORMER = Transformer
-    TUNER = Tuner 
-    EVALUATOR = Evaluator
-    PUSHER = Pusher
-
-
-CollieComponentType = Union[
-    Trainer, Transformer, Tuner, Evaluator, Pusher
-]
-
-
-class EventType(Enum):
-    INITAILIZE = auto()
-    DATA_READY = auto()
-    TRAINING_DONE = auto()
-    TUNING_DONE = auto()
-    EVALUATION_DONE = auto()
-    PUSHER_DONE = auto()
-    ERROR = auto()
 
 
 class TransformerArtifactPath(BaseModel):
@@ -67,6 +35,8 @@ class TransformerPayload(BaseModel):
     train_data: Optional[pd.DataFrame] = None
     validation_data: Optional[pd.DataFrame]  = None
     test_data: Optional[pd.DataFrame]  = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class TrainerPayload(BaseModel):

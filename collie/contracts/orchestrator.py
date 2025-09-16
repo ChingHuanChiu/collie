@@ -7,8 +7,8 @@ from abc import abstractmethod
 
 from mlflow.tracking import MlflowClient
 
-from collie.contracts.event import Event
-from collie._common.types import CollieComponentType, CollieComponents
+from collie.contracts.event import Event, EventType
+from collie.core.types import CollieComponentType, CollieComponents
 from collie.contracts.mlflow import MLFlowComponentABC
 
 

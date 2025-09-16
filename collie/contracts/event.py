@@ -5,11 +5,13 @@ from typing import (
     TypeVar
 )
 from abc import abstractmethod, ABC
+from pydantic import (
+    Field, 
+    BaseModel, 
+    ConfigDict
+)
 
-from pydantic import Field, BaseModel
-
-
-from collie._common.types import EventType
+from enum import Enum, auto
 from collie._common.decorator import type_checker
 
 
@@ -25,13 +27,26 @@ class PipelineContext:
 
     def to_dict(self):
         return self.data
-    
+
+#TODO: place the right file
+class EventType(Enum):
+    INITAILIZE = auto()
+    DATA_READY = auto()
+    TRAINING_DONE = auto()
+    TUNING_DONE = auto()
+    EVALUATION_DONE = auto()
+    PUSHER_DONE = auto()
+    ERROR = auto()
+
 
 P = TypeVar("P")
 class Event(BaseModel):
     type: Optional[EventType] = None
     payload: P
     context: PipelineContext = Field(default_factory=PipelineContext) #TODO: remove this field because the artifact is used
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 
 class EventHandler(ABC):

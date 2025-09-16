@@ -1,7 +1,10 @@
-from collie.contracts.event import Event, EventHandler
+from collie.contracts.event import (
+    Event, 
+    EventHandler, 
+    EventType
+)
 from collie.contracts.mlflow import MLFlowComponentABC
-from collie._common.types import (
-    EventType,
+from collie.core.models import (
     TrainerPayload,
     TrainerArtifactPath
 )

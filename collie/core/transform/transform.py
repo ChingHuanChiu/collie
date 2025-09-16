@@ -1,12 +1,14 @@
 import pandas as pd
-from typing import Dict
 
-from collie.contracts.event import Event, EventHandler
+from collie.contracts.event import (
+    Event, 
+    EventHandler, 
+    EventType
+)
 from collie.contracts.mlflow import MLFlowComponentABC
-from collie._common.types import (
-    EventType,
+from collie.core.models import (
     TransformerPayload,
-    TransformerArtifactPath,
+    TransformerArtifactPath
 )
 from collie._common.decorator import type_checker
 

@@ -1,5 +1,3 @@
-import pandas as pd
-
 from collie.contracts.event import (
     Event, 
     EventHandler, 
@@ -30,22 +28,24 @@ class Transformer(EventHandler, MLFlowComponentABC):
             run_name="Transformer",
             log_system_metrics=True,
             nested=True,
-        ):
+        ) as run:
             transformer_event = self._handle(event)
 
             transformer_payload = self._transformer_payload(transformer_event)
             event_type = EventType.DATA_READY
+            artifact_root = run.info.artifact_uri
 
             data = transformer_payload.model_dump()
             for data_type, data in data.items():
-                if data:
-                    artifact_path = TransformerArtifactPath.model_dump()[data_type]
-                    #TODO: remove the code after testing the log_text is working
-                    # local_path = LocalArtifactDir.artifacts
-                    self.log_data(
+
+                if data is not None:
+                    artifact_path = TransformerArtifactPath().model_dump()[data_type]
+                    
+                    source = f"{artifact_root}/{data_type}.csv" 
+                    self.log_pd_data(
                         data=data, 
-                        # local_path=f"{local_path}/Transformer/{data_type}.csv", 
-                        artifact_path=artifact_path
+                        context=data_type,
+                        source=source
                     )
 
             return Event(
@@ -60,20 +60,3 @@ class Transformer(EventHandler, MLFlowComponentABC):
     def _transformer_payload(self, event: Event) -> TransformerPayload: 
 
         return event.payload
-    
-    def log_data(
-            self, 
-            data: pd.DataFrame,
-            # local_path: str,
-            artifact_path: TransformerArtifactPath
-        ) -> None:
-        #TODO: remove the code after testing the log_text is working
-        # data.to_csv(local_path, index=False)
-        # self.log_artifact(
-        #     local_path=local_path, 
-        #     artifact_path=artifact_path
-        # )
-        self.log_text(
-            text=data.to_csv(index=False),
-            artifact_path=artifact_path
-        )

@@ -48,7 +48,10 @@ class Orchestrator(OrchestratorBase):
 
         for idx, component in enumerate(self.components):
             logger.info(f"Running component {idx}: {type(component).__name__}")
+            # TODO: Use the singlrton pattern to share the follwing attributes
             component.mlflow_client = self.mlflow_client
+            component.tracking_uri = self.tracking_uri
+            component.experiment_name = self.experiment_name
             incoming_event = self.run_component(component, incoming_event)
 
         logger.info("Pipeline finished successfully.")
@@ -59,6 +62,9 @@ class Orchestrator(OrchestratorBase):
         incoming_event: Event
     ) -> Event:
         """Prepare the payload for each component type and run it."""
+        import mlflow
+        print(f"Running component: {type(component).__name__}")
+
 
         if self.is_initialize_event_flavor(component):
             incoming_event = Event(
@@ -68,11 +74,12 @@ class Orchestrator(OrchestratorBase):
 
         elif self.is_transformer_event_flavor(component):
             transformer_payload = {}
-            artifact_path: Dict[str, str] = TransformerArtifactPath.model_dump()
+            artifact_root = self.get_experiment().artifact_location
+            artifact_path: Dict[str, str] = TransformerArtifactPath().model_dump()
             for data_type, data_artifact_path in artifact_path.items():
-                data_str = self.load_text(data_artifact_path)
-                # TODO: use the mlflow api to load the data
-                transformer_payload[data_type] = pd.read_csv(io.StringIO(data_str))
+
+                
+                transformer_payload[data_type] = pd.read_csv(f"{artifact_root}/{data_artifact_path}/{data_type}.csv")
 
             incoming_event = Event(
                 type=EventType.DATA_READY,

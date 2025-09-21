@@ -28,23 +28,22 @@ class OrchestratorBase(MLFlowComponentABC):
         self.components = components
         self.tuner_is_exist = any(isinstance(component, CollieComponents.TUNER.value) for component in self.components)
         self.mlflow_tags = mlflow_tags
-        self.tracking_uri = tracking_uri
+        self.track_uri = tracking_uri
         self.description = description
-        self.experiment_name = experiment_name
+        self.exp_name = experiment_name
         
-        if not self.tracking_uri:
-            # TODO: use the better way
-            self.tracking_uri = "./metadata/"
-        self.mlflow_client = MlflowClient(tracking_uri=self.tracking_uri)
+        if not tracking_uri:
+            raise ValueError("tracking_uri must be provided for Orchestrator.")
+        self.mlflow_client = MlflowClient(tracking_uri=tracking_uri)
 
     @abstractmethod
     def orchestrate_pipeline(self) -> Any:
         raise NotImplementedError
 
     def run(self) -> Any:
-
-        self.set_tracking_uri(self.tracking_uri)
-        self.set_experiment(self.experiment_name)
+        
+        self.tracking_uri = self.track_uri
+        self.experiment_name = self.exp_name
         experiment_id = self.get_exp_id(self.experiment_name)
 
         with self.start_run(
@@ -53,7 +52,6 @@ class OrchestratorBase(MLFlowComponentABC):
             description=self.description, 
             experiment_id=experiment_id
         ):
-
             res = self.orchestrate_pipeline()
         return res
 

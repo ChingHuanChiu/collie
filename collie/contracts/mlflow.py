@@ -1,3 +1,4 @@
+import os
 from abc import ABCMeta, abstractmethod
 from typing import (
     Any, 
@@ -12,7 +13,9 @@ from contextlib import contextmanager
 
 import numpy as np
 import mlflow
+import mlflow.data
 import PIL
+import pandas as pd
 from mlflow.tracking import MlflowClient
 from mlflow import ActiveRun
 import xgboost as xgb
@@ -25,6 +28,8 @@ from collie._common.mlflow_model_io.model_io import MLflowModelIO
 class MLFlowComponentABC(metaclass=ABCMeta):
 
     _mlflow_client = None
+    _experiment_name = None
+    _tracking_uri = None
 
     @abstractmethod
     def run(self, *args, **kwargs) -> Any:
@@ -53,14 +58,35 @@ class MLFlowComponentABC(metaclass=ABCMeta):
         """
         if self._mlflow_client is None:
             self._mlflow_client = mlflow_client
+
+    @property
+    def tracking_uri(self) -> str:
+        return self._tracking_uri
     
-    def set_tracking_uri(self, tracking_uri: str) -> None:
+    @tracking_uri.setter
+    def tracking_uri(self, data: str) -> None:
+        self._tracking_uri = data
+        mlflow.set_tracking_uri(data)
 
-        mlflow.set_tracking_uri(tracking_uri)
+    @property
+    def experiment_name(self) -> Optional[str]:
+        return self._experiment_name
 
-    def set_experiment(self, experiment_name: str) -> None:
+    @experiment_name.setter
+    def experiment_name(self, name: str) -> None:
+        self._experiment_name = name
+        mlflow.set_experiment(name)
+    
+    def get_experiment(self) -> Optional[mlflow.entities.Experiment]:
+        """
+        Get the current MLflow experiment.
 
-        mlflow.set_experiment(experiment_name)
+        Returns:
+            The current MLflow experiment, or None if no experiment is set.
+        """
+        if self._experiment_name is None:
+            return None
+        return mlflow.get_experiment_by_name(self._experiment_name)
     
     def log_artifact(
         self, 
@@ -255,6 +281,26 @@ class MLFlowComponentABC(metaclass=ABCMeta):
             raise RuntimeError(
                 f"Failed to register model '{model_name}' with URI '{model_uri}': {e}"
             ) from e
+    
+    def log_pd_data(
+        self, 
+        data: pd.DataFrame,
+        context: str,
+        source: str,
+    ) -> None:
+        
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError("Data must be a pandas DataFrame.")
+
+        ds = mlflow.data.from_pandas(data, source=source)
+        print(f"Logging data with context: {context}", f"ds: {ds}", f"source: {source}")
+        mlflow.log_input(ds, context=context)
+
+        data.to_csv(f"{context}.csv", index=False)
+        self.log_artifact(f"{context}.csv")
+        os.remove(f"{context}.csv")
+        
+        
     
     @contextmanager
     def start_run(

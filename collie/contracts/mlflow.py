@@ -293,7 +293,6 @@ class MLFlowComponentABC(metaclass=ABCMeta):
             raise ValueError("Data must be a pandas DataFrame.")
 
         ds = mlflow.data.from_pandas(data, source=source)
-        print(f"Logging data with context: {context}", f"ds: {ds}", f"source: {source}")
         mlflow.log_input(ds, context=context)
 
         data.to_csv(f"{context}.csv", index=False)

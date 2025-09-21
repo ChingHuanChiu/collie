@@ -40,8 +40,13 @@ class Transformer(EventHandler, MLFlowComponentABC):
 
                 if data is not None:
                     artifact_path = TransformerArtifactPath().model_dump()[data_type]
-                    
                     source = f"{artifact_root}/{data_type}.csv" 
+                    event.context.set(
+                        f"{data_type}_uri",
+                        source
+                    )
+                    
+                    
                     self.log_pd_data(
                         data=data, 
                         context=data_type,

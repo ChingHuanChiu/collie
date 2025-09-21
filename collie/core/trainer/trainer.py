@@ -1,3 +1,5 @@
+from typing import List
+
 from collie.contracts.event import (
     Event, 
     EventHandler, 
@@ -33,16 +35,17 @@ class Trainer(EventHandler, MLFlowComponentABC):
 
             trainer_payload = self._trainer_payload(trainer_event)
             event_type = EventType.TRAINING_DONE
-            event.context.set(
-                "model_uri",
-                run.info.artifact_uri
-            )
             
             model = trainer_payload.model
+            model_name = "model"
             self.log_model(
                 model=model, 
-                name=None
+                name=model_name
             )
+            # artifacts = self.fetch_artifact_path(run)
+            # model_uri = artifacts[0]
+            model_uri = f"runs:/{run.info.run_id}/{model_name}"
+            event.context.set("model_uri", model_uri)
 
             return Event(
                 type=event_type,
@@ -56,3 +59,19 @@ class Trainer(EventHandler, MLFlowComponentABC):
     def _trainer_payload(self, event: Event) -> TrainerPayload: 
 
         return event.payload
+    
+    def fetch_artifact_path(
+        self, 
+        run,
+        # artifact_path: str
+    ) -> List[str]:
+        
+        # Reference the mlflow.log_model method to list artifacts
+        for artifact_path in ["model/data"]:
+            # remove the "model/" prefix
+            # TODO : Find the reason that the aritfiacts path are different between local and ui
+            artifacts = [
+                f.path[6:] for f in self.mlflow_client.list_artifacts(run.info.run_id, artifact_path)
+            ]
+        print(666666, artifacts)
+        return artifacts

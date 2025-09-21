@@ -219,21 +219,21 @@ class MLFlowComponentABC(metaclass=ABCMeta):
     def log_model(
         self, 
         model: Any, 
-        artifact_path: str, 
+        name: Optional[str] = None,
     ) -> None:
        
-        model_io = MLflowModelIO()
+        model_io = MLflowModelIO(self.mlflow_client)
 
-        model_io.log_model(model, artifact_path)
+        model_io.log_model(model, name)
     
     def load_model(
         self, 
-        artifact_path: str
+        name: Optional[str] = None,
     ) -> Any:
         
-        model_io = MLflowModelIO()
+        model_io = MLflowModelIO(self.mlflow_client)
         run_id = mlflow.active_run().info.run_id
-        return model_io.load_model(run_id, artifact_path)
+        return model_io.load_model(run_id, name)
 
     def transition_model_version(
         self,

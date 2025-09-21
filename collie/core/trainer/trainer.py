@@ -28,16 +28,20 @@ class Trainer(EventHandler, MLFlowComponentABC):
             tags={"component": "Trainer"},
             log_system_metrics=True, 
             nested=True
-        ):
+        ) as run:
             trainer_event = self._handle(event)
 
             trainer_payload = self._trainer_payload(trainer_event)
             event_type = EventType.TRAINING_DONE
+            event.context.set(
+                "model_uri",
+                run.info.artifact_uri
+            )
             
             model = trainer_payload.model
             self.log_model(
                 model=model, 
-                artifact_path=self.artifact_path
+                name=None
             )
 
             return Event(
@@ -52,7 +56,3 @@ class Trainer(EventHandler, MLFlowComponentABC):
     def _trainer_payload(self, event: Event) -> TrainerPayload: 
 
         return event.payload
-    
-    @property
-    def artifact_path(self):
-        return TrainerArtifactPath.model

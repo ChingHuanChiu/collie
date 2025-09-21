@@ -45,6 +45,8 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             evaluator_event = self._handle(event)
             payload = self._get_evaluator_payload(evaluator_event)
 
+            print(f"Model URI: {event.context.get('model_uri')}")
+            self.model_uri = event.context.get('model_uri')
             self.register_model(
                 model_name=self.registered_model_name, 
                 model_uri=self.model_uri

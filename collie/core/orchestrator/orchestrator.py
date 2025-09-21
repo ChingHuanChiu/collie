@@ -44,7 +44,7 @@ class Orchestrator(OrchestratorBase):
         """Run the pipeline sequentially without Airflow."""
 
         logger.info("Pipeline started.")
-        incoming_event = self.start_event()
+        incoming_event = self.initialize_event()
 
         for idx, component in enumerate(self.components):
             logger.info(f"Running component {idx}: {type(component).__name__}")
@@ -52,71 +52,72 @@ class Orchestrator(OrchestratorBase):
             component.mlflow_client = self.mlflow_client
             component.tracking_uri = self.tracking_uri
             component.experiment_name = self.experiment_name
-            incoming_event = self.run_component(component, incoming_event)
 
+            incoming_event = component.run(incoming_event)
+
+            logger.info(f"Component {idx} finished: {type(component).__name__}")
         logger.info("Pipeline finished successfully.")
 
-    def run_component(
-        self, 
-        component: CollieComponentType, 
-        incoming_event: Event
-    ) -> Event:
-        """Prepare the payload for each component type and run it."""
-        import mlflow
-        print(f"Running component: {type(component).__name__}")
+    # def run_component(
+    #     self, 
+    #     component: CollieComponentType, 
+    #     incoming_event: Event
+    # ) -> Event:
+    #     """Prepare the payload for each component type and run it."""
+    #     print(f"Running component: {type(component).__name__}")
 
 
-        if self.is_initialize_event_flavor(component):
-            incoming_event = Event(
-                type=EventType.INITAILIZE,
-                payload=None
-            )
+    #     if self.is_initialize_event_flavor(component):
+    #         incoming_event = Event(
+    #             type=EventType.INITAILIZE,
+    #             payload=None
+    #         )
 
-        elif self.is_transformer_event_flavor(component):
-            transformer_payload = {}
-            artifact_root = self.get_experiment().artifact_location
-            artifact_path: Dict[str, str] = TransformerArtifactPath().model_dump()
-            for data_type, data_artifact_path in artifact_path.items():
+    #     elif self.is_transformer_event_flavor(component):
+    #         transformer_payload = {}
+    #         artifact_root = self.get_experiment().artifact_location
+    #         artifact_path: Dict[str, str] = TransformerArtifactPath().model_dump()
+    #         for data_type, data_artifact_path in artifact_path.items():
 
                 
-                transformer_payload[data_type] = pd.read_csv(f"{artifact_root}/{data_artifact_path}/{data_type}.csv")
+    #             transformer_payload[data_type] = pd.read_csv(f"{artifact_root}/{data_artifact_path}/{data_type}.csv")
 
-            incoming_event = Event(
-                type=EventType.DATA_READY,
-                payload=transformer_payload
-            )
+    #         incoming_event = Event(
+    #             type=EventType.DATA_READY,
+    #             payload=transformer_payload
+    #         )
 
-        elif self.is_tuner_event_flavor(component):
-            artifact_path: str = TunerArtifactPath.hyperparameters
-            hyperparameters: Dict[str, Any] = self.load_dict(artifact_path)
-            tuner_payload = {"hyperparameters": hyperparameters["hyperparameters"]}
+    #     elif self.is_tuner_event_flavor(component):
+    #         artifact_path: str = TunerArtifactPath.hyperparameters
+    #         hyperparameters: Dict[str, Any] = self.load_dict(artifact_path)
+    #         tuner_payload = {"hyperparameters": hyperparameters["hyperparameters"]}
 
-            incoming_event = Event(
-                type=EventType.DATA_READY,
-                payload=tuner_payload
-            )
+    #         incoming_event = Event(
+    #             type=EventType.DATA_READY,
+    #             payload=tuner_payload
+    #         )
 
-        elif self.is_trainer_event_flavor(component):
-            artifact_path: str = TrainerArtifactPath.model
-            model = self.load_model(artifact_path)
-            trainer_payload = {"model": model}
+    #     elif self.is_trainer_event_flavor(component):
+    #         artifact_path: str = TrainerArtifactPath.model
+    #         model = self.load_model(artifact_path)
+    #         trainer_payload = {"model": model}
 
-            incoming_event = Event(
-                type=EventType.DATA_READY,
-                payload=trainer_payload
-            )
+    #         incoming_event = Event(
+    #             type=EventType.DATA_READY,
+    #             payload=trainer_payload
+    #         )
 
-        elif self.is_evaluator_event_flavor(component):
-            artifact_path: str = EvaluatorArtifactPath.metrics
-            metrics = self.load_dict(artifact_path)
-            eval_payload = {"metrics": metrics["metrics"]}
+    #     elif self.is_evaluator_event_flavor(component):
+    #         artifact_path: str = EvaluatorArtifactPath.metrics
+    #         metrics = self.load_dict(artifact_path)
+    #         eval_payload = {"metrics": metrics["metrics"]}
 
-            incoming_event = Event(
-                type=EventType.DATA_READY,
-                payload=eval_payload
-            )
+    #         incoming_event = Event(
+    #             type=EventType.DATA_READY,
+    #             payload=eval_payload
+    #         )
 
-        else:
-            raise ValueError(f"Unsupported component type: {type(component)}")
+    #     else:
+    #         raise ValueError(f"Unsupported component type: {type(component)}")
 
-        return component.run(incoming_event)
+    #     return component.run(incoming_event)

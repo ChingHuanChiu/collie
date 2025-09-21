@@ -7,7 +7,10 @@ from collie._common.mlflow_model_io.flavor_registry import FlavorRegistry
 
 
 class MLflowModelIO:
-    def __init__(self, mlflow_client: MlflowClient):
+    def __init__(
+        self, 
+        mlflow_client: MlflowClient
+    ):
         self.registry = FlavorRegistry()
         self.client = mlflow_client
 
@@ -22,7 +25,12 @@ class MLflowModelIO:
         if handler is None:
             raise ValueError(f"Unsupported model type: {type(model)}")
 
-        handler.log_model(model, artifact_path, registered_model_name=registered_model_name, **kwargs)
+        handler.log_model(
+            model, 
+            artifact_path, 
+            registered_model_name=registered_model_name, 
+            **kwargs
+        )
         mlflow.log_param("model_flavor", handler.flavor())
 
     def load_model(

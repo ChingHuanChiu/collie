@@ -82,7 +82,7 @@ class OrchestratorBase(MLFlowComponentABC):
             return True
         return False
     
-    def start_event(self) -> Event:
+    def initialize_event(self) -> Event:
         """Initialize pipeline with an event."""
         return Event(
             type=EventType.INITAILIZE,

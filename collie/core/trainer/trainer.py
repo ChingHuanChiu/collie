@@ -8,7 +8,7 @@ from collie.contracts.event import (
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie.core.models import (
     TrainerPayload,
-    TrainerArtifactPath
+    TrainerArtifact
 )
 from collie._common.decorator import type_checker
 
@@ -37,15 +37,11 @@ class Trainer(EventHandler, MLFlowComponentABC):
             event_type = EventType.TRAINING_DONE
             
             model = trainer_payload.model
-            model_name = "model"
             self.log_model(
                 model=model, 
-                name=model_name
+                name=TrainerArtifact().model
             )
-            # artifacts = self.fetch_artifact_path(run)
-            # model_uri = artifacts[0]
-            model_uri = f"runs:/{run.info.run_id}/{model_name}"
-            event.context.set("model_uri", model_uri)
+            event.context.set("model_uri", self.artifact_uri(run))
 
             return Event(
                 type=event_type,
@@ -60,18 +56,5 @@ class Trainer(EventHandler, MLFlowComponentABC):
 
         return event.payload
     
-    def fetch_artifact_path(
-        self, 
-        run,
-        # artifact_path: str
-    ) -> List[str]:
-        
-        # Reference the mlflow.log_model method to list artifacts
-        for artifact_path in ["model/data"]:
-            # remove the "model/" prefix
-            # TODO : Find the reason that the aritfiacts path are different between local and ui
-            artifacts = [
-                f.path[6:] for f in self.mlflow_client.list_artifacts(run.info.run_id, artifact_path)
-            ]
-        print(666666, artifacts)
-        return artifacts
+    def artifact_uri(self, run) -> str:
+        return f"runs:/{run.info.run_id}/{TrainerArtifact().model}"

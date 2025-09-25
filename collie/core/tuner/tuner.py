@@ -6,7 +6,7 @@ from collie.contracts.event import (
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie._common.decorator import type_checker
 from collie.core.models import (
-    TunerArtifactPath,
+    TunerArtifact,
     TunerPayload
 )
 
@@ -29,7 +29,7 @@ class Tuner(EventHandler, MLFlowComponentABC):
             run_name="Tuner",
             log_system_metrics=True,
             nested=True,
-        ):
+        ) as run:
             tuner_event = self._handle(event)
 
             tuner_payload = self._tuner_payload(tuner_event)
@@ -37,7 +37,11 @@ class Tuner(EventHandler, MLFlowComponentABC):
 
             self.log_dict(
                 dictionary=hyperparameters, 
-                artifact_path=self.artifact_path
+                artifact_path=TunerArtifact().hyperparameters
+            )
+            event.context.set(
+                "hyperparameters_uri",
+                self.artifact_path(run)
             )
 
             event_type = EventType.TUNING_DONE
@@ -55,7 +59,5 @@ class Tuner(EventHandler, MLFlowComponentABC):
 
         return event.payload
     
-
-    @property
-    def artifact_path(self) -> str:
-        return TunerArtifactPath.hyperparameters
+    def artifact_path(self, run) -> str:
+        return f"{run.info.artifact_uri}/{TunerArtifact().hyperparameters}"

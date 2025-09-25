@@ -7,7 +7,7 @@ from collie.contracts.event import (
 )
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie.core.models import (
-    EvaluatorArtifactPath,
+    EvaluatorArtifact,
     EvaluatorPayload
 )
 from collie._common.decorator import type_checker
@@ -41,7 +41,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             run_name="Evaluator",
             log_system_metrics=True,
             nested=True,
-        ):
+        ) as run:
             evaluator_event = self._handle(event)
             payload = self._get_evaluator_payload(evaluator_event)
 
@@ -54,10 +54,12 @@ class Evaluator(EventHandler, MLFlowComponentABC):
 
             for metric_name, metric_value in payload.metrics.items():
                 self.log_metric(metric_name, metric_value)
+            
             self.log_dict(
                 dictionary=payload.model_dump(), 
-                artifact_path=self.artifact_path
+                artifact_path=EvaluatorArtifact().report
             )
+            event.context.set("evaluator_report_uri", self.artifact_uri(run))
 
             experiment_score = payload.metrics.get("Experiment")
             production_score = payload.metrics.get("Production")
@@ -114,6 +116,5 @@ class Evaluator(EventHandler, MLFlowComponentABC):
     def _get_evaluator_payload(self, event: Event) -> EvaluatorPayload: 
         return event.payload
     
-    @property
-    def artifact_path(self) -> str:
-        return EvaluatorArtifactPath.metrics
+    def artifact_uri(self, run) -> str:
+        return f"{run.info.artifact_uri}/{EvaluatorArtifact().report}"

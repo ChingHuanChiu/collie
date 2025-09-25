@@ -10,11 +10,11 @@ from collie.contracts.event import Event, EventType
 from collie.contracts.orchestrator import OrchestratorBase
 from collie.core.types import CollieComponentType
 from collie.core.models import (
-    TrainerArtifactPath,
-    TransformerArtifactPath,
-    TunerArtifactPath,
-    EvaluatorArtifactPath,
-    PusherArtifactPath
+    TrainerArtifact,
+    TransformerArtifact,
+    TunerArtifact,
+    EvaluatorArtifact,
+    PusherArtifact
 )
 from collie._common.utils import get_logger
 

@@ -8,7 +8,7 @@ from collie.contracts.event import (
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie.core.models import (
     PusherPayload,
-    PusherArtifactPath
+    PusherArtifact
 )
 from collie._common.decorator import type_checker
 
@@ -63,4 +63,4 @@ class Pusher(EventHandler, MLFlowComponentABC):
     
     @property
     def artifact_path(self) -> str:
-        return PusherArtifactPath.model_uri
+        return PusherArtifact().model_uri

@@ -6,7 +6,7 @@ from collie.contracts.event import (
 from collie.contracts.mlflow import MLFlowComponentABC
 from collie.core.models import (
     TransformerPayload,
-    TransformerArtifactPath
+    TransformerArtifact
 )
 from collie._common.decorator import type_checker
 
@@ -33,19 +33,16 @@ class Transformer(EventHandler, MLFlowComponentABC):
 
             transformer_payload = self._transformer_payload(transformer_event)
             event_type = EventType.DATA_READY
-            artifact_root = run.info.artifact_uri
 
             data = transformer_payload.model_dump()
             for data_type, data in data.items():
 
                 if data is not None:
-                    artifact_path = TransformerArtifactPath().model_dump()[data_type]
-                    source = f"{artifact_root}/{data_type}.csv" 
+                    source = self.artifact_uri(run, data_type)
                     event.context.set(
                         f"{data_type}_uri",
                         source
                     )
-                    
                     
                     self.log_pd_data(
                         data=data, 
@@ -65,3 +62,6 @@ class Transformer(EventHandler, MLFlowComponentABC):
     def _transformer_payload(self, event: Event) -> TransformerPayload: 
 
         return event.payload
+    
+    def artifact_uri(self, run, data_type) -> str:
+         return f"{run.info.artifact_uri}/{TransformerArtifact().model_dump()[data_type]}" 

@@ -9,25 +9,25 @@ from pydantic import BaseModel, ConfigDict
 import pandas as pd
 
 
-class TransformerArtifactPath(BaseModel):
-    train_data: str = "Transformer/train"
-    validation_data: str = "Transformer/validation"
-    test_data: str = "Transformer/test"
+class TransformerArtifact(BaseModel):
+    train_data: str = "train.csv"
+    validation_data: str = "validation.csv"
+    test_data: str = "test.csv"
 
 
-class TunerArtifactPath(BaseModel):
-    hyperparameters: str = "Tuner/hyperparameters"
+class TunerArtifact(BaseModel):
+    hyperparameters: str = "hyperparameters.json"
 
 
-class TrainerArtifactPath(BaseModel):
-    model: str = "Trainer/model"
+class TrainerArtifact(BaseModel):
+    model: str = "model"
 
 
-class EvaluatorArtifactPath(BaseModel):
-    metrics: str = "Evaluator/metrics"
+class EvaluatorArtifact(BaseModel):
+    report: str = "report.json"
 
 
-class PusherArtifactPath(BaseModel):
+class PusherArtifact(BaseModel):
     model_uri: str = "Pusher/model_uri"
 
 

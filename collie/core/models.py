@@ -27,10 +27,6 @@ class EvaluatorArtifact(BaseModel):
     report: str = "report.json"
 
 
-class PusherArtifact(BaseModel):
-    model_uri: str = "Pusher/model_uri"
-
-
 class TransformerPayload(BaseModel):
     train_data: Optional[pd.DataFrame] = None
     validation_data: Optional[pd.DataFrame]  = None
@@ -44,9 +40,16 @@ class TrainerPayload(BaseModel):
     train_loss: Optional[float] = None
     val_loss: Optional[float] = None
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 class TunerPayload(BaseModel):
     hyperparameters: Dict[str, Any]
+    train_data: Optional[pd.DataFrame] = None
+    validation_data: Optional[pd.DataFrame]  = None
+    test_data: Optional[pd.DataFrame]  = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class EvaluatorPayload(BaseModel):

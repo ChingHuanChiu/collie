@@ -18,5 +18,9 @@ class CollieComponents(Enum):
 
 
 CollieComponentType = Union[
-    Trainer, Transformer, Tuner, Evaluator, Pusher
+    Trainer, 
+    Transformer, 
+    Tuner,
+    Evaluator, 
+    Pusher
 ]

@@ -6,11 +6,12 @@ from collie.contracts.event import (
     EventType
 )
 from collie.contracts.mlflow import MLFlowComponentABC
+from collie._common.decorator import type_checker
+
 from collie.core.models import (
     EvaluatorArtifact,
     EvaluatorPayload
 )
-from collie._common.decorator import type_checker
 
 
 class Evaluator(EventHandler, MLFlowComponentABC):

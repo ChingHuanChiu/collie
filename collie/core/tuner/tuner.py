@@ -57,7 +57,9 @@ class Tuner(EventHandler, MLFlowComponentABC):
     )    
     def _tuner_payload(self, event: Event) -> TunerPayload: 
 
-        return event.payload
+        tuner_payload: TunerPayload = event.payload
+
+        return tuner_payload
     
     def artifact_path(self, run) -> str:
         return f"{run.info.artifact_uri}/{TunerArtifact().hyperparameters}"

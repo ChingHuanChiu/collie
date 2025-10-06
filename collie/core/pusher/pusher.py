@@ -6,10 +6,7 @@ from collie.contracts.event import (
     EventType
 )
 from collie.contracts.mlflow import MLFlowComponentABC
-from collie.core.models import (
-    PusherPayload,
-    PusherArtifact
-)
+from collie.core.models import PusherPayload
 from collie._common.decorator import type_checker
 
 
@@ -60,7 +57,3 @@ class Pusher(EventHandler, MLFlowComponentABC):
     @type_checker((PusherPayload,), "PusherPayload must be of type PusherPayload.")
     def _get_evaluator_payload(self, event: Event) -> PusherPayload:
         return event.payload
-    
-    @property
-    def artifact_path(self) -> str:
-        return PusherArtifact().model_uri

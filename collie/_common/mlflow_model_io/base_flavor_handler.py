@@ -9,11 +9,16 @@ class FlavorHandler(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def flavor(self) -> str:
+    def flavor(self):
         raise NotImplementedError
 
     @abstractmethod
-    def log_model(self, model: Any, artifact_path: str, **kwargs: Any) -> None:
+    def log_model(
+        self, 
+        model: Any, 
+        artifact_path: str, 
+        **kwargs: Any
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod

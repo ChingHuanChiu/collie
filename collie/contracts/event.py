@@ -10,8 +10,8 @@ from pydantic import (
     BaseModel, 
     ConfigDict
 )
-
 from enum import Enum, auto
+
 from collie._common.decorator import type_checker
 
 
@@ -28,9 +28,8 @@ class PipelineContext:
     def to_dict(self):
         return self.data
 
-#TODO: place the right file
 class EventType(Enum):
-    INITAILIZE = auto()
+    INITIALIZE = auto()
     DATA_READY = auto()
     TRAINING_DONE = auto()
     TUNING_DONE = auto()
@@ -46,7 +45,6 @@ class Event(BaseModel):
     context: PipelineContext = Field(default_factory=PipelineContext) 
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
 
 
 class EventHandler(ABC):

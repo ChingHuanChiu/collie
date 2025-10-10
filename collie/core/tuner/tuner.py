@@ -9,6 +9,7 @@ from collie.core.models import (
     TunerArtifact,
     TunerPayload
 )
+from collie._common.exceptions import TunerError
 
 
 class Tuner(EventHandler, MLFlowComponentABC):
@@ -30,27 +31,30 @@ class Tuner(EventHandler, MLFlowComponentABC):
             log_system_metrics=True,
             nested=True,
         ) as run:
-            tuner_event = self._handle(event)
+            try:
+                tuner_event = self._handle(event)
 
-            tuner_payload = self._tuner_payload(tuner_event)
-            hyperparameters = tuner_payload.model_dump()
+                tuner_payload = self._tuner_payload(tuner_event)
+                hyperparameters = tuner_payload.model_dump()
 
-            self.log_dict(
-                dictionary=hyperparameters, 
-                artifact_path=TunerArtifact().hyperparameters
-            )
-            event.context.set(
-                "hyperparameters_uri",
-                self.artifact_path(run)
-            )
+                self.log_dict(
+                    dictionary=hyperparameters, 
+                    artifact_path=TunerArtifact().hyperparameters
+                )
+                event.context.set(
+                    "hyperparameters_uri",
+                    self.artifact_path(run)
+                )
 
-            event_type = EventType.TUNING_DONE
+                event_type = EventType.TUNING_DONE
 
-            return Event(
-                type=event_type,
-                payload=tuner_payload,
-                context=event.context
-            )
+                return Event(
+                    type=event_type,
+                    payload=tuner_payload,
+                    context=event.context
+                )
+            except Exception as e:
+                raise TunerError(f"Tuner failed with error: {e}") from e
 
     @type_checker((TunerPayload,) , 
         "TunerPayload must be of type TunerPayload."

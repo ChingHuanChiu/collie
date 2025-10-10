@@ -9,6 +9,7 @@ from collie.core.models import (
     TransformerArtifact
 )
 from collie._common.decorator import type_checker
+from collie._common.exceptions import TransformerError
 
 
 class Transformer(EventHandler, MLFlowComponentABC):
@@ -29,32 +30,36 @@ class Transformer(EventHandler, MLFlowComponentABC):
             log_system_metrics=True,
             nested=True,
         ) as run:
-            transformer_event = self._handle(event)
+            try:
+                transformer_event = self._handle(event)
 
-            transformer_payload = self._transformer_payload(transformer_event)
-            event_type = EventType.DATA_READY
+                transformer_payload = self._transformer_payload(transformer_event)
+                event_type = EventType.DATA_READY
 
-            data = transformer_payload.model_dump()
-            for data_type, data in data.items():
+                data = transformer_payload.model_dump()
+                for data_type, data in data.items():
 
-                if data is not None:
-                    source = self.artifact_uri(run, data_type)
-                    event.context.set(
-                        f"{data_type}_uri",
-                        source
-                    )
-                    
-                    self.log_pd_data(
-                        data=data, 
-                        context=data_type,
-                        source=source
-                    )
+                    if data is not None:
+                        source = self.artifact_uri(run, data_type)
+                        event.context.set(
+                            f"{data_type}_uri",
+                            source
+                        )
+                        
+                        self.log_pd_data(
+                            data=data, 
+                            context=data_type,
+                            source=source
+                        )
 
-            return Event(
-                type=event_type,
-                payload=transformer_payload,
-                context=event.context
-            )
+                return Event(
+                    type=event_type,
+                    payload=transformer_payload,
+                    context=event.context
+                )
+
+            except Exception as e:
+                raise TransformerError(f"Transformer failed with error: {e}")
         
     @type_checker((TransformerPayload,) , 
         "TransformerPayload must be of type TransformerPayload."

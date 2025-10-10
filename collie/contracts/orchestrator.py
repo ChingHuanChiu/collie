@@ -5,11 +5,20 @@ from typing import (
 )
 from abc import abstractmethod
 
-from mlflow.tracking import MlflowClient
-
 from collie.contracts.event import Event, EventType
-from collie.core.types import CollieComponentType, CollieComponents
-from collie.contracts.mlflow import MLFlowComponentABC
+from collie.core.enums.components import CollieComponentType
+from collie.contracts.mlflow import (
+    MLFlowComponentABC,
+    MLflowConfig
+)
+from collie._common.exceptions import (
+    OrchestratorError,
+    TrainerError,
+    TunerError,
+    EvaluatorError,
+    PusherError,
+    TransformationError,
+)
 
 
 class OrchestratorBase(MLFlowComponentABC):
@@ -24,17 +33,11 @@ class OrchestratorBase(MLFlowComponentABC):
     ) -> None:
 
         super().__init__()
-        #TODO: make sure that the components are the right order of the pipeline
         self.components = components
-        self.tuner_is_exist = any(isinstance(component, CollieComponents.TUNER.value) for component in self.components)
         self.mlflow_tags = mlflow_tags
-        self.track_uri = tracking_uri
+        self.tracking_uri = tracking_uri
         self.description = description
-        self.exp_name = experiment_name
-        
-        if not tracking_uri:
-            raise ValueError("tracking_uri must be provided for Orchestrator.")
-        self.mlflow_client = MlflowClient(tracking_uri=tracking_uri)
+        self.experiment_name = experiment_name
 
     @abstractmethod
     def orchestrate_pipeline(self) -> Any:
@@ -42,49 +45,36 @@ class OrchestratorBase(MLFlowComponentABC):
 
     def run(self) -> Any:
         
-        self.tracking_uri = self.track_uri
-        self.experiment_name = self.exp_name
-        experiment_id = self.get_exp_id(self.experiment_name)
-
-        with self.start_run(
-            tags=self.mlflow_tags, 
-            run_name="Orchestrator", 
-            description=self.description, 
-            experiment_id=experiment_id
-        ):
-            res = self.orchestrate_pipeline()
-        return res
-
-    def is_initialize_event_flavor(self, component: CollieComponentType) -> bool:
-        if isinstance(component, CollieComponents.TRANSFORMER.value):
-            return True
-        return False
-
-    def is_transformer_event_flavor(self, component: CollieComponentType) -> bool:
-        if isinstance(component, CollieComponents.TRAINER.value) and not self.tuner_is_exist:
-            return True
-        if isinstance(component, CollieComponents.TUNER.value):
-            return True
-        return False
-
-    def is_tuner_event_flavor(self, component: CollieComponentType) -> bool:
-        if isinstance(component, CollieComponents.TRAINER.value):
-            return True
-        return False
-    
-    def is_trainer_event_flavor(self, component: CollieComponentType) -> bool:
-        if isinstance(component, CollieComponents.EVALUATOR.value):
-            return True
-        return False
-
-    def is_evaluator_event_flavor(self, component: CollieComponentType) -> bool:
-        if isinstance(component, CollieComponents.PUSHER.value):
-            return True
-        return False
-    
+        self.mlflow_config = MLflowConfig(
+            tracking_uri=self.tracking_uri,
+            experiment_name=self.experiment_name,
+        )
+        try:
+            with self.start_run(
+                tags=self.mlflow_tags, 
+                run_name="Orchestrator", 
+                description=self.description, 
+            ):
+                return self.orchestrate_pipeline()
+        except (
+            TrainerError,
+            TunerError,
+            EvaluatorError,
+            PusherError,
+            TransformationError,
+        ) as e:
+            # 简化错误处理，避免重复的 type(e).__name__
+            raise OrchestratorError(
+                f"Component error in orchestration: {str(e)}"
+            ) from e
+        except Exception as e:
+            raise OrchestratorError(
+                f"Unexpected orchestration error: {str(e)}"
+            ) from e
+        
     def initialize_event(self) -> Event:
         """Initialize pipeline with an event."""
         return Event(
-            type=EventType.INITAILIZE,
+            type=EventType.INITIALIZE,
             payload=None
         )

@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import List, Optional
 
 from collie._common.mlflow_model_io.base_flavor_handler import FlavorHandler
 from collie._common.mlflow_model_io.model_flavors import (
@@ -10,9 +10,9 @@ from collie._common.mlflow_model_io.model_flavors import (
 )
 
 
-
 class FlavorRegistry:
     def __init__(self):
+        
         self._handlers: List[FlavorHandler] = [
             SklearnFlavorHandler(),
             XGBoostFlavorHandler(),

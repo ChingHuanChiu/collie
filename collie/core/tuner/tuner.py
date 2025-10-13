@@ -1,3 +1,4 @@
+from typing import Optional
 from collie.contracts.event import (
     Event, 
     EventHandler, 
@@ -14,8 +15,14 @@ from collie._common.exceptions import TunerError
 
 class Tuner(EventHandler, MLFlowComponentABC):
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        description: Optional[str] = None,
+        tags: Optional[dict] = None
+    ) -> None:
         super().__init__()
+        self.description = description
+        self.tags = tags or {"component": "Tuner"}
     
     def run(self, event: Event) -> None:
         """
@@ -26,10 +33,11 @@ class Tuner(EventHandler, MLFlowComponentABC):
         """
 
         with self.start_run(
-            tags={"component": "Tuner"},
+            tags=self.tags,
             run_name="Tuner",
             log_system_metrics=True,
             nested=True,
+            description=self.description
         ) as run:
             try:
                 tuner_event = self._handle(event)

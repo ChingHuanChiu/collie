@@ -1,3 +1,4 @@
+from typing import Optional
 from collie.contracts.event import (
     Event, 
     EventHandler, 
@@ -14,8 +15,14 @@ from collie._common.exceptions import TransformerError
 
 class Transformer(EventHandler, MLFlowComponentABC):
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        description: Optional[str] = None,
+        tags: Optional[dict] = None
+    ) -> None:
         super().__init__()
+        self.description = description
+        self.tags = tags or {"component": "Transformer"}
     
     def run(self, event: Event) -> Event:
         """
@@ -25,10 +32,11 @@ class Transformer(EventHandler, MLFlowComponentABC):
         logs metrics, and sets the outputs.
         """
         with self.start_run(
-            tags={"component": "Transformer"},
+            tags=self.tags,
             run_name="Transformer",
             log_system_metrics=True,
             nested=True,
+            description=self.description
         ) as run:
             try:
                 transformer_event = self._handle(event)

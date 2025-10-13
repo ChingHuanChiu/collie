@@ -29,6 +29,10 @@ from collie._common.exceptions import (
     MLflowConfigurationError, 
     MLflowOperationError
 )
+from collie.core.enums.ml_models import (
+    MLflowModelStage,
+    ModelFlavor
+)
 
 
 logger = get_logger()
@@ -312,33 +316,62 @@ class _MLflowModelManager:
         except Exception as e:
             raise MLflowOperationError(f"Failed to log model '{name}': {e}") from e
     
-    def load_model(self, name: Optional[str] = None) -> Any:
+    def load_model(
+        self, 
+        flavor: ModelFlavor,
+        model_uri: Optional[str] = None
+    ) -> Any:
         
-        """
-        Load a model from the currently active MLflow run.
-
-        Args:
-            name (Optional[str], optional): The name of the model to load. Defaults to None.
-
-        Returns:
-            Any: The loaded model.
-
-        Raises:
-            MLflowOperationError: If there is no active run or if loading the model fails.
-        """
         try:
             active_run = mlflow.active_run()
             if active_run is None:
                 raise MLflowOperationError("No active run found")
             
-            run_id = active_run.info.run_id
-            model = self._model_io.load_model(run_id, name)
-            logger.info(f"Loaded model: {name or 'unnamed'}")
+            model = self._model_io.load_model(flavor, model_uri)
             return model
         except Exception as e:
-            raise MLflowOperationError(f"Failed to load model '{name}': {e}") from e
+            raise MLflowOperationError(f"Failed to load model '{model_uri}': {e}") from e
+    
+    def load_latest_model(
+            self, 
+            model_name: str, 
+            stage: MLflowModelStage,
+            flavor: ModelFlavor
+        ) -> Any:
+      
+        """
+        Loads the latest version of a model from a given stage.
 
-    def register_model(self, model_name: str, model_uri: str) -> int:
+        Args:
+            model_name (str): The name of the model to load.
+            stage (MLflowModelStage): The stage from which to load the model.
+            flavor (ModelFlavor): The flavor of the model to load.
+
+        Returns:
+            Any: The loaded model if found, otherwise None.
+
+        Raises:
+            MLflowOperationError: If loading the model fails.
+        """
+        try:
+            latest_versions = self._mlflow_client.get_latest_versions(model_name, stages=[stage])
+            if not latest_versions:
+                logger.warning(f"No model found in stage '{stage}' for model '{model_name}'")
+                return None
+            
+            latest = latest_versions[0]  
+            model_uri = latest.source 
+        except Exception as e:
+            logger.error(f"Failed to get latest model version for '{model_name}' in stage '{stage}': {e}")
+            return None
+            
+        return self.load_model(flavor=flavor, model_uri=model_uri)
+
+    def register_model(
+        self, 
+        model_name: str, 
+        model_uri: str
+    ) -> int:
         
         """
         Registers a model with MLflow.
@@ -399,18 +432,18 @@ class _MLflowModelManager:
     def get_latest_version(
         self,
         model_name: str,
-        stages: List[Literal["None", "Staging", "Production", "Archived"]],
+        stages
     ) -> Optional[str]:
+       
         """
         Retrieves the latest version number of a model in the specified stages.
 
         Args:
             model_name (str): The name of the model to retrieve the latest version for.
-            stages (List[Literal["None", "Staging", "Production", "Archived"]]): 
-                The stages in which to search for the latest version.
+            stages (List[MLflowModelStage], optional): The stages in which to search for the latest version.
 
         Returns:
-            str: The latest version number of the model in the specified stages, or None if no versions are found.
+            Optional[str]: The latest version number of the model in the specified stages if found, otherwise None.
 
         Raises:
             MLflowOperationError: If retrieving the latest version fails.
@@ -549,6 +582,19 @@ class MLFlowComponentABC(metaclass=ABCMeta):
     ) -> Any:
        
         return self.model_manager.load_model(name)
+    
+    def load_latest_model(
+            self, 
+            model_name: str,
+            flavor: ModelFlavor,
+            stage: MLflowModelStage = MLflowModelStage.PRODUCTION,
+        ) -> Any:
+        
+        return self.model_manager.load_latest_model(
+            model_name, 
+            stage,
+            flavor
+        ) 
 
     def register_model(
         self, 
@@ -621,6 +667,7 @@ class MLFlowComponentABC(metaclass=ABCMeta):
         except MlflowException as e:
             logger.error(f"Failed to get experiment '{experiment_name}': {e}")
             return None
+        
 
     @contextmanager
     def start_run(
@@ -660,5 +707,6 @@ class MLFlowComponentABC(metaclass=ABCMeta):
             ) as active_run:
                 logger.info(f"Started MLflow run: {active_run.info.run_id}")
                 yield active_run
+
         except MlflowException as e:
             raise MLflowOperationError(f"Failed to start MLflow run: {e}") from e

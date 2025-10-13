@@ -18,6 +18,7 @@ from collie.core.enums.ml_models import ModelFlavor
 
 
 class SklearnFlavorHandler(FlavorHandler):
+    
     def can_handle(self, model: Any) -> bool:
         return isinstance(model, sklearn.base.BaseEstimator)
 

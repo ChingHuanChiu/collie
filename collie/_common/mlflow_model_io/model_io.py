@@ -54,31 +54,12 @@ class MLflowModelIO:
 
     def load_model(
         self, 
-        run_id: str, 
-        name: str,
+        flavor: str,
+        model_uri: str,
     ) -> Any:
-        
-        """
-        Loads a model from MLflow.
-
-        Args:
-            run_id (str): The run ID to load the model from.
-            name (str): The name of the model to load.
-
-        Returns:
-            Any: The loaded model.
-
-        Raises:
-            ValueError: If the run does not contain a model_flavor param or if the model flavor is unsupported.
-        """
-        run = self.client.get_run(run_id)
-        flavor = run.data.params.get("model_flavor")
-
-        if not flavor:
-            raise ValueError(f"No model_flavor param found in run {run_id}")
 
         handler = self.registry.find_handler_by_flavor(flavor)
         if handler is None:
             raise ValueError(f"Unsupported model flavor: {flavor}")
 
-        return handler.load_model(name)
+        return handler.load_model(model_uri)

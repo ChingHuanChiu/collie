@@ -16,6 +16,7 @@ class Orchestrator(OrchestratorBase):
         self,
         components: CollieComponentType,
         tracking_uri: str,
+        registered_model_name: str,
         mlflow_tags: Optional[Dict[str, str]] = None,
         experiment_name: Optional[str] = None,
         description: Optional[str] = None,
@@ -27,6 +28,7 @@ class Orchestrator(OrchestratorBase):
             experiment_name=experiment_name,
             description=description
         )
+        self.registered_model_name = registered_model_name
 
     def orchestrate_pipeline(self) -> None:
         """Run the pipeline sequentially without Airflow."""
@@ -37,6 +39,8 @@ class Orchestrator(OrchestratorBase):
         for idx, component in enumerate(self.components):
             logger.info(f"Running component {idx}: {type(component).__name__}")
             component.mlflow_config = self.mlflow_config
+            if hasattr(component, "_registered_model_name"):
+                component.registered_model_name = self.registered_model_name
         
             incoming_event = component.run(incoming_event)
 

@@ -2,7 +2,7 @@ from typing import (
     Dict, 
     Any,
     Optional,
-    Literal,
+    List,
 )
 from pydantic import BaseModel, ConfigDict
 
@@ -53,8 +53,10 @@ class TunerPayload(BaseModel):
 
 
 class EvaluatorPayload(BaseModel):
-    metrics: Dict[Literal["Production", "Experiment"], Any]
-    greater_is_better: bool = True
+        # metrics: Dict[Literal["Production", "Experiment"], Any]
+        # greater_is_better: bool = True
+        metrics: List[Dict[str, Any]]
+        is_better_than_production: bool
 
 
 class PusherPayload(BaseModel):

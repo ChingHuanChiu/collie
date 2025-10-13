@@ -17,7 +17,7 @@ from collie._common.exceptions import (
     TunerError,
     EvaluatorError,
     PusherError,
-    TransformationError,
+    TransformerError,
 )
 
 
@@ -61,9 +61,8 @@ class OrchestratorBase(MLFlowComponentABC):
             TunerError,
             EvaluatorError,
             PusherError,
-            TransformationError,
+            TransformerError,
         ) as e:
-            # 简化错误处理，避免重复的 type(e).__name__
             raise OrchestratorError(
                 f"Component error in orchestration: {str(e)}"
             ) from e
@@ -71,7 +70,7 @@ class OrchestratorBase(MLFlowComponentABC):
             raise OrchestratorError(
                 f"Unexpected orchestration error: {str(e)}"
             ) from e
-        
+
     def initialize_event(self) -> Event:
         """Initialize pipeline with an event."""
         return Event(

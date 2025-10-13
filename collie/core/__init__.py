@@ -10,8 +10,13 @@ from .models import (
     TunerPayload,
     EvaluatorPayload,
     PusherPayload,
+    TrainerArtifact,
+    TransformerArtifact,
+    TunerArtifact,
+    EvaluatorArtifact
 )
-from .types import CollieComponentType, CollieComponents
+from .enums.components import CollieComponentType, CollieComponents
+from .enums.ml_models import ModelFlavor
 
 
 __all__ = [
@@ -27,5 +32,10 @@ __all__ = [
     "EvaluatorPayload",
     "PusherPayload",
     "CollieComponentType",
-    "CollieComponents"    
+    "CollieComponents",
+    "TrainerArtifact",
+    "TransformerArtifact",
+    "TunerArtifact",
+    "EvaluatorArtifact",
+    "ModelFlavor"
 ]

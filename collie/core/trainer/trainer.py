@@ -1,3 +1,4 @@
+from typing import Optional
 from collie.contracts.event import (
     Event, 
     EventHandler, 
@@ -9,13 +10,19 @@ from collie.core.models import (
     TrainerArtifact
 )
 from collie._common.decorator import type_checker
-from collie._common.exceptions import TrainerError 
+from collie._common.exceptions import TrainerError
 
 
 class Trainer(EventHandler, MLFlowComponentABC):
 
-    def __init__(self) -> None:
+    def __init__(
+        self, 
+        description: Optional[str] = None,
+        tags: Optional[dict] = None
+    ) -> None:
         super().__init__()
+        self.description = description
+        self.tags = tags or {"component": "Trainer"}
     
     def run(self, event: Event) -> Event:
         """
@@ -27,9 +34,10 @@ class Trainer(EventHandler, MLFlowComponentABC):
         
         with self.start_run(
             run_name="Trainer", 
-            tags={"component": "Trainer"},
+            tags=self.tags,
             log_system_metrics=True, 
-            nested=True
+            nested=True,
+            description=self.description
         ) as run:
             try:
                 trainer_event = self._handle(event)

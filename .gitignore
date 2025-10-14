@@ -1,3 +1,6 @@
 .DS_Store
-*.ipynb
+test.ipynb
 __pycache__
+*.db
+mlruns/
+helper/

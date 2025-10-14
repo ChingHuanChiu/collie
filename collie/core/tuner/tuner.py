@@ -1,0 +1,84 @@
+from typing import Optional
+from collie.contracts.event import (
+    Event, 
+    EventHandler, 
+    EventType
+)
+from collie.contracts.mlflow import MLFlowComponentABC
+from collie._common.decorator import type_checker
+from collie.core.models import (
+    TunerArtifact,
+    TunerPayload
+)
+from collie._common.exceptions import TunerError
+
+
+class Tuner(EventHandler, MLFlowComponentABC):
+
+    def __init__(
+        self,
+        description: Optional[str] = None,
+        tags: Optional[dict] = None
+    ) -> None:
+        """
+        Initializes the Tuner component.
+
+        Args:
+            description (Optional[str], optional): Description for the MLflow run. Defaults to None.
+            tags (Optional[dict], optional): Tags to associate with the MLflow run. Defaults to None.
+        """
+        super().__init__()
+        self.description = description
+        self.tags = tags or {"component": "Tuner"}
+    
+    def run(self, event: Event) -> None:
+        """
+        Run the hyperparameter tuner component.
+
+        This method starts a new MLflow run, tunes the hyperparameters,
+        logs metrics, and sets the outputs.
+        """
+
+        with self.start_run(
+            tags=self.tags,
+            run_name="Tuner",
+            log_system_metrics=True,
+            nested=True,
+            description=self.description
+        ) as run:
+            try:
+                tuner_event = self._handle(event)
+
+                tuner_payload = self._tuner_payload(tuner_event)
+                hyperparameters = tuner_payload.model_dump()
+
+                self.mlflow.log_dict(
+                    dictionary=hyperparameters, 
+                    artifact_file=TunerArtifact().hyperparameters
+                )
+                event.context.set(
+                    "hyperparameters_uri",
+                    self.artifact_path(run)
+                )
+
+                event_type = EventType.TUNING_DONE
+
+                return Event(
+                    type=event_type,
+                    payload=tuner_payload,
+                    context=event.context
+                )
+            except Exception as e:
+                raise TunerError(f"Tuner failed with error: {e}") from e
+
+    @type_checker((TunerPayload,) , 
+        "TunerPayload must be of type TunerPayload."
+    )    
+    def _tuner_payload(self, event: Event) -> TunerPayload: 
+
+        tuner_payload: TunerPayload = event.payload
+
+        return tuner_payload
+    
+    def artifact_path(self, run) -> str:
+        return f"{run.info.artifact_uri}/{TunerArtifact().hyperparameters}"

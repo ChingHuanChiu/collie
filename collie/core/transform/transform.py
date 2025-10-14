@@ -20,6 +20,13 @@ class Transformer(EventHandler, MLFlowComponentABC):
         description: Optional[str] = None,
         tags: Optional[dict] = None
     ) -> None:
+        """
+        Initializes the Transformer component.
+
+        Args:
+            description (Optional[str], optional): Description for the MLflow run. Defaults to None.
+            tags (Optional[dict], optional): Tags to associate with the MLflow run. Defaults to None.
+        """
         super().__init__()
         self.description = description
         self.tags = tags or {"component": "Transformer"}

@@ -1,7 +1,7 @@
-import os
+import functools
 import tempfile
 import threading
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from typing import (
     Any, 
     Optional, 
@@ -14,10 +14,8 @@ from typing import (
 )
 from contextlib import contextmanager
 
-import numpy as np
 import mlflow
 import mlflow.data
-import PIL
 import pandas as pd
 from mlflow.tracking import MlflowClient
 from mlflow import ActiveRun
@@ -68,223 +66,6 @@ class MLflowConfig:
         """Configure the singleton with MLflow settings."""
         mlflow.set_tracking_uri(self.tracking_uri)
         mlflow.set_experiment(self.experiment_name)
-
-    
-class _MLflowLogger:
-    """Handles MLflow logging operations."""
-    
-    @staticmethod
-    def log_metric(
-        key: str, 
-        value: float, 
-        step: Optional[int] = None,
-        **kwargs
-    ) -> None:
-        
-        """
-        Log a metric with MLflow.
-
-        Args:
-            key (str): The metric name.
-            value (float): The metric value.
-            step (Optional[int], optional): The metric step. Defaults to None.
-
-        Raises:
-            MLflowOperationError: If logging the metric fails.
-        """
-        try:
-            mlflow.log_metric(key=key, value=value, step=step, **kwargs)
-            logger.debug(f"Logged metric: {key}={value}")
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to log metric '{key}': {e}") from e
-
-    @staticmethod
-    def log_param(key: str, value: str, **kwargs) -> None:
-        
-        """
-        Log a parameter with MLflow.
-
-        Args:
-            key (str): The parameter name.
-            value (str): The parameter value.
-
-        Raises:
-            MLflowOperationError: If logging the parameter fails.
-        """
-        
-        try:
-            mlflow.log_param(key=key, value=value, **kwargs)
-            logger.debug(f"Logged parameter: {key}={value}")
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to log parameter '{key}': {e}") from e
-        
-    @staticmethod
-    def log_artifact(
-        local_path: str, 
-        artifact_path: Optional[str] = None
-    ) -> None:
-       
-        """
-        Log an artifact with MLflow.
-
-        Args:
-            local_path (str): The path to the artifact.
-            artifact_path (Optional[str], optional): The path to log the artifact to. Defaults to None.
-
-        Raises:
-            MLflowOperationError: If logging the artifact fails.
-        """
-        if not os.path.exists(local_path):
-            raise MLflowOperationError(f"Artifact path does not exist: {local_path}")
-        
-        try:
-            mlflow.log_artifact(local_path, artifact_path)
-            logger.debug(f"Logged artifact: {local_path}")
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to log artifact '{local_path}': {e}") from e
-
-    @staticmethod
-    def log_image(
-        image: Union["np.ndarray", "PIL.Image.Image", "mlflow.Image"],
-        artifact_path: Optional[str] = None,
-        **kwargs: Any
-    ) -> None:
-        
-        """
-        Log an image with MLflow.
-
-        Args:
-            image (Union["np.ndarray", "PIL.Image.Image", "mlflow.Image"]): The image to log.
-            artifact_path (Optional[str], optional): The path to log the image to. Defaults to None.
-
-        Raises:
-            MLflowOperationError: If logging the image fails.
-        """
-        try:
-            mlflow.log_image(image, artifact_path, **kwargs)
-            logger.debug(f"Logged image to: {artifact_path}")
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to log image: {e}") from e
-
-    @staticmethod
-    def log_text(
-        text: str, 
-        artifact_path: Optional[str] = None,
-        **kwargs: Any
-    ) -> None:
-        
-        """
-        Log text with MLflow.
-
-        Args:
-            text (str): The text to log.
-            artifact_path (Optional[str], optional): The path to log the text to. Defaults to None.
-
-        Raises:
-            MLflowOperationError: If logging the text fails.
-        """
-        try:
-            mlflow.log_text(text, artifact_path, **kwargs)
-            logger.debug(f"Logged text to: {artifact_path}")
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to log text: {e}") from e
-
-    @staticmethod
-    def log_dict(
-        dictionary: Dict[str, Any], 
-        artifact_path: Optional[str] = None,
-        **kwargs: Any
-    ) -> None:
-        
-        """
-        Log a dictionary with MLflow.
-
-        Args:
-            dictionary (Dict[str, Any]): The dictionary to log.
-            artifact_path (Optional[str], optional): The path to log the dictionary to. Defaults to None.
-
-        Raises:
-            MLflowOperationError: If logging the dictionary fails.
-        """
-        try:
-            mlflow.log_dict(dictionary, artifact_path, **kwargs)
-            logger.debug(f"Logged dictionary to: {artifact_path}")
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to log dictionary: {e}") from e
-
-    @staticmethod
-    def log_pd_data(
-        data: pd.DataFrame,
-        context: str,
-        source: str,
-    ) -> None:
-        
-        """
-        Log a pandas DataFrame with MLflow.
-
-        Args:
-            data (pd.DataFrame): The DataFrame to log.
-            context (str): The context to log the DataFrame under.
-            source (str): The source of the DataFrame.
-
-        Raises:
-            MLflowOperationError: If logging the DataFrame fails.
-        """
-        if not isinstance(data, pd.DataFrame):
-            raise ValueError("Data must be a pandas DataFrame.")
-        
-        try:
-            ds = mlflow.data.from_pandas(data, source=source)
-            mlflow.log_input(ds, context=context)
-
-            with tempfile.NamedTemporaryFile(delete=True, suffix=".csv") as tmp:
-                data.to_csv(tmp.name, index=False)
-                mlflow.log_artifact(tmp.name)
-
-            logger.debug(f"Logged pandas data for context: {context}")
-        except Exception as e:
-            raise MLflowOperationError(f"Failed to log pandas data: {e}") from e
-
-    @staticmethod
-    def load_text(artifact_path: str) -> str:
-        
-        """
-        Load text artifact from MLflow.
-
-        Args:
-            artifact_path (str): The path to the text artifact.
-
-        Returns:
-            str: The loaded text.
-
-        Raises:
-            MLflowOperationError: If loading the text artifact fails.
-        """
-        try:
-            return mlflow.artifacts.load_text(artifact_path)
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to load text from '{artifact_path}': {e}") from e
-
-    @staticmethod
-    def load_dict(artifact_path: str) -> Dict[str, Any]:
-        
-        """
-        Load a dictionary artifact from MLflow.
-
-        Args:
-            artifact_path (str): The path to the dictionary artifact.
-
-        Returns:
-            Dict[str, Any]: The loaded dictionary.
-
-        Raises:
-            MLflowOperationError: If loading the dictionary artifact fails.
-        """
-        
-        try:
-            return mlflow.artifacts.load_dict(artifact_path)
-        except MlflowException as e:
-            raise MLflowOperationError(f"Failed to load dict from '{artifact_path}': {e}") from e
 
 
 class _MLflowModelManager:
@@ -463,17 +244,16 @@ class _MLflowModelManager:
             ) from e
 
 
-
-class MLFlowComponentABC(metaclass=ABCMeta):
+class MLFlowComponentABC(ABC):
     """
     Abstract base class for MLflow components with separated concerns.
     """
 
     def __init__(self) -> None:
-
-        self._logger = _MLflowLogger
+        super().__init__()
         self._mlflow_config = None
         self._model_manager = None
+        self.mlflow = mlflow
 
     @abstractmethod
     def run(self, *args, **kwargs) -> Any:
@@ -500,73 +280,26 @@ class MLFlowComponentABC(metaclass=ABCMeta):
             self._model_manager = _MLflowModelManager(mlflow_client)
         return self._model_manager
 
-    # Logging delegation
-    def log_metric(
-        self, 
-        key: str, 
-        value: float, 
-        step: Optional[int] = None, 
-        **kwargs
-    ) -> None:
-        self._logger.log_metric(key, value, step, **kwargs)
-
-    def log_param(
-        self, 
-        key: str, 
-        value: str, 
-        **kwargs
-    ) -> None:
-        self._logger.log_param(key, value, **kwargs)
-
-    def log_artifact(
-        self, 
-        local_path: str, 
-        artifact_path: Optional[str] = None
-    ) -> None:
-        self._logger.log_artifact(local_path, artifact_path)
-
-    def log_image(
-        self, 
-        image: Union["np.ndarray", "PIL.Image.Image", "mlflow.Image"], 
-        artifact_path: Optional[str] = None, 
-        **kwargs: Any
-    ) -> None:
-        self._logger.log_image(image, artifact_path, **kwargs)
-
-    def log_text(
-        self, text: str, 
-        artifact_path: Optional[str] = None, 
-        **kwargs: Any
-    ) -> None:
-        self._logger.log_text(text, artifact_path, **kwargs)
-
-    def log_dict(
-        self, 
-        dictionary: Dict[str, Any], 
-        artifact_path: Optional[str] = None, 
-        **kwargs: Any
-    ) -> None:
-        self._logger.log_dict(dictionary, artifact_path, **kwargs)
-
     def log_pd_data(
         self, 
         data: pd.DataFrame, 
         context: str, 
         source: str
     ) -> None:
-        self._logger.log_pd_data(data, context, source)
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError("Data must be a pandas DataFrame.")
+        
+        try:
+            ds = self.mlflow.data.from_pandas(data, source=source)
+            self.mlflow.log_input(ds, context=context)
 
-    def load_text(
-        self, 
-        artifact_path: str
-    ) -> str:
-        return self._logger.load_text(artifact_path)
+            with tempfile.NamedTemporaryFile(delete=True, suffix=".csv") as tmp:
+                data.to_csv(tmp.name, index=False)
+                self.mlflow.log_artifact(tmp.name)
 
-    def load_dict(
-        self, 
-        artifact_path: str
-    ) -> Dict[str, Any]:
-        return self._logger.load_dict(artifact_path)
+            logger.debug(f"Logged pandas data for context: {context}")
+        except Exception as e:
+            raise MLflowOperationError(f"Failed to log pandas data: {e}") from e
 
     def log_model(
         self, 
@@ -659,7 +392,7 @@ class MLFlowComponentABC(metaclass=ABCMeta):
         if not experiment_name:
             return None
         try:
-            experiment = mlflow.get_experiment_by_name(experiment_name)
+            experiment = self.mlflow.get_experiment_by_name(experiment_name)
             if return_id:
                 return experiment.experiment_id
             else:
@@ -697,7 +430,7 @@ class MLFlowComponentABC(metaclass=ABCMeta):
             self.mlflow_config.configure()
             experiment_id = self.get_experiment(return_id=True)
 
-            with mlflow.start_run(
+            with self.mlflow.start_run(
                 experiment_id=experiment_id,
                 run_name=run_name,
                 nested=nested,

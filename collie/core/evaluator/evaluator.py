@@ -115,7 +115,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             stage = self.target_stage
             archive = True
             event.context.set("pass_evaluation", True)
-            self.log_param("promotion_reason", "experiment_is_better")
+            self.mlflow.log_param("promotion_reason", "experiment_is_better")
             version = self._next_model_version()
             self.transition_model_version(
                 registered_model_name=self.registered_model_name,
@@ -127,9 +127,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             stage = MLflowModelStage.NONE
             archive = False
             event.context.set("pass_evaluation", False)
-            self.log_param("promotion_reason", "experiment_not_better")
-
-        
+            self.mlflow.log_param("promotion_reason", "experiment_not_better")
 
     def _next_model_version(self) -> str:
         """
@@ -175,9 +173,9 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             "is_better": payload.is_better_than_production,
             "metrics": flattened
         }
-        self.log_dict(
+        self.mlflow.log_dict(
             dictionary=summary, 
-            artifact_path=f"{EvaluatorArtifact().report}"
+            artifact_file=f"{EvaluatorArtifact().report}"
         )
     
     def _log_metrics(self) -> None:
@@ -186,7 +184,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
         """
         for metric_dict in self.metrics:
             for metric_name, metric_value in metric_dict.items():
-                self.log_metric(metric_name, metric_value)
+                self.mlflow.log_metric(metric_name, metric_value)
     
     @type_checker((EvaluatorPayload,), "EvaluatorPayload must be of type EvaluatorPayload.")
     def _get_evaluator_payload(self, event: Event) -> EvaluatorPayload: 

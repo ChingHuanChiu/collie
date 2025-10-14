@@ -20,6 +20,13 @@ class Tuner(EventHandler, MLFlowComponentABC):
         description: Optional[str] = None,
         tags: Optional[dict] = None
     ) -> None:
+        """
+        Initializes the Tuner component.
+
+        Args:
+            description (Optional[str], optional): Description for the MLflow run. Defaults to None.
+            tags (Optional[dict], optional): Tags to associate with the MLflow run. Defaults to None.
+        """
         super().__init__()
         self.description = description
         self.tags = tags or {"component": "Tuner"}
@@ -45,9 +52,9 @@ class Tuner(EventHandler, MLFlowComponentABC):
                 tuner_payload = self._tuner_payload(tuner_event)
                 hyperparameters = tuner_payload.model_dump()
 
-                self.log_dict(
+                self.mlflow.log_dict(
                     dictionary=hyperparameters, 
-                    artifact_path=TunerArtifact().hyperparameters
+                    artifact_file=TunerArtifact().hyperparameters
                 )
                 event.context.set(
                     "hyperparameters_uri",

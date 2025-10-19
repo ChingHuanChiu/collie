@@ -51,8 +51,29 @@ class EventHandler(ABC):
     
     @abstractmethod
     def handle(self, event: Event) -> Event:
-        raise NotImplementedError()
+        """
+        Handle the incoming event and return a new event.
+        
+        This method must be implemented by all concrete event handlers.
+        It should process the event payload and return a new event with
+        the appropriate type and payload for the next component.
+        
+        Args:
+            event (Event): The incoming event to process
+            
+        Returns:
+            Event: A new event with processed payload
+            
+        Raises:
+            NotImplementedError: If not implemented by concrete class
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement the 'handle' method. "
+            f"This method should process the incoming event and return a new event "
+            f"with the appropriate payload for the next pipeline component."
+        )
     
     @type_checker((Event,), "The return type of *handle* method must be 'Event'.")
     def _handle(self, event: Event) -> Event:
+        """Internal wrapper for handle method with type checking."""
         return self.handle(event)

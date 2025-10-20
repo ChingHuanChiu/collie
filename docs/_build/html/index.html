@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collie MLOps Framework Documentation &mdash; Collie 0.1.0-beta documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Collie
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Collie</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Collie MLOps Framework Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="collie-mlops-framework-documentation">
+<h1>Collie MLOps Framework Documentation<a class="headerlink" href="#collie-mlops-framework-documentation" title="Permalink to this heading"></a></h1>
+<a class="reference external image-reference" href="https://pypi.org/project/collie-mlops/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/collie-mlops.svg" /></a>
+<a class="reference external image-reference" href="https://pypi.org/project/collie-mlops/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/collie-mlops.svg" /></a>
+<div class="section" id="welcome-to-collie">
+<h2>Welcome to Collie<a class="headerlink" href="#welcome-to-collie" title="Permalink to this heading"></a></h2>
+<p>Collie is a lightweight MLOps framework that provides a modular, event-driven architecture
+for building machine learning pipelines with deep MLflow integration.</p>
+<p><strong>Key Features:</strong></p>
+<ul class="simple">
+<li><p>🎯 <strong>Modular Components</strong>: Transform, Train, Tune, Evaluate, and Push</p></li>
+<li><p>🔄 <strong>Event-Driven</strong>: Flexible workflow orchestration</p></li>
+<li><p>📊 <strong>MLflow Integration</strong>: First-class MLflow support for tracking and model management</p></li>
+<li><p>🚀 <strong>Lightweight</strong>: Simple setup, no complex dependencies</p></li>
+<li><p>🔧 <strong>Extensible</strong>: Easy to add custom components</p></li>
+</ul>
+</div>
+<div class="section" id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this heading"></a></h2>
+<div class="section" id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>collie-mlops
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Transformer</span><span class="p">,</span>
+    <span class="n">Trainer</span><span class="p">,</span>
+    <span class="n">Orchestrator</span><span class="p">,</span>
+    <span class="n">TransformerPayload</span><span class="p">,</span>
+    <span class="n">TrainerPayload</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_iris</span>
+<span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="c1"># Define your Transformer</span>
+<span class="k">class</span> <span class="nc">IrisTransformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">()</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">])</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">train_data</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+<span class="c1"># Define your Trainer</span>
+<span class="k">class</span> <span class="nc">IrisTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">()</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">accuracy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># Log metrics to MLflow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">train_loss</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">accuracy</span><span class="p">,</span>
+                <span class="n">val_loss</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+<span class="c1"># Run the pipeline</span>
+<span class="n">orchestrator</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="n">IrisTransformer</span><span class="p">(),</span> <span class="n">IrisTrainer</span><span class="p">()],</span>
+    <span class="n">tracking_uri</span><span class="o">=</span><span class="s2">&quot;http://localhost:5000&quot;</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;iris_experiment&quot;</span><span class="p">,</span>
+    <span class="n">registered_model_name</span><span class="o">=</span><span class="s2">&quot;iris_model&quot;</span>
+<span class="p">)</span>
+<span class="n">orchestrator</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#your-first-pipeline">Your First Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#complete-example">Complete Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#next-steps">Next Steps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#get-help">Get Help</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core_concepts.html#understanding-collie-s-architecture">Understanding Collie’s Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_concepts.html#component-lifecycle">Component Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_concepts.html#the-pipeline-flow">The Pipeline Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_concepts.html#components-in-detail">Components in Detail</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_concepts.html#event-based-data-flow">Event-Based Data Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_concepts.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mlflow_integration.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mlflow_integration.html#mlflow-interface">MLflow Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mlflow_integration.html#available-mlflow-methods">Available MLflow Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mlflow_integration.html#advanced-features">Advanced Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mlflow_integration.html#mlflow-methods-reference">MLflow Methods Reference</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#core-components">Core Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#core-models">Core Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/contracts.html#usage-examples">Usage Examples</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ChingHuanChiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

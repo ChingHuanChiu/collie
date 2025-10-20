@@ -53,7 +53,7 @@ pip install collie-mlops[all]
 
 ### Prerequisites
 
-- Python >= 3.8
+- Python >= 3.10
 - MLflow tracking server (can be local or remote)
 
 ### Basic Usage
@@ -206,22 +206,6 @@ Check out the [examples directory](./example/mlp) for complete working examples:
 - **[API Reference](docs/_build/html/api/core.html)** - Complete API documentation
 - **[Quick Reference Card](docs/MLFLOW_QUICK_REFERENCE.md)** - Cheat sheet for MLflow methods
 
-### Building Documentation Locally
-
-```bash
-cd docs
-make html
-open _build/html/index.html  # macOS
-```
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history and changes.
-
 ## Roadmap
 
 - [x] Complete Sphinx documentation with MLflow methods
@@ -248,13 +232,6 @@ If you use Collie in your research, please cite:
   url = {https://github.com/ChingHuanChiu/collie}
 }
 ```
-
-## Acknowledgments
-
-- Built with ❤️ using [MLflow](https://mlflow.org/)
-- Inspired by modern MLOps best practices
-- Documentation powered by [Sphinx](https://www.sphinx-doc.org/)
-
 ## Support
 
 For questions and support, please open an issue on the [GitHub repository](https://github.com/ChingHuanChiu/collie/issues).

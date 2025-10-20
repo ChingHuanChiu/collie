@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLflow Integration &mdash; Collie 0.1.0-beta documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Core API Reference" href="api/core.html" />
+    <link rel="prev" title="Core Concepts" href="core_concepts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Collie
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MLflow Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mlflow-interface">MLflow Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-mlflow-integration-contract">The MLflow Integration Contract</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#available-mlflow-methods">Available MLflow Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#core-logging-methods">Core Logging Methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#log-parameters">Log Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#log-metrics">Log Metrics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#log-artifacts">Log Artifacts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#load-models">Load Models</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-features">Advanced Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#run-management">Run Management</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#context-managers">Context Managers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#experiment-management">Experiment Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tagging">Tagging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mlflow-methods-reference">MLflow Methods Reference</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Collie</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MLflow Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/mlflow_integration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="mlflow-integration">
+<h1>MLflow Integration<a class="headerlink" href="#mlflow-integration" title="Permalink to this heading"></a></h1>
+<p>Collie provides deep integration with MLflow for experiment tracking, model logging,
+and model management. This guide explains how to use MLflow features within Collie components.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Every Collie component (Transformer, Trainer, Tuner, Evaluator, Pusher) has access to
+MLflow functionality through the <code class="docutils literal notranslate"><span class="pre">self.mlflow</span></code> attribute. This provides a clean interface
+to all MLflow operations.</p>
+</div>
+<div class="section" id="mlflow-interface">
+<h2>MLflow Interface<a class="headerlink" href="#mlflow-interface" title="Permalink to this heading"></a></h2>
+<div class="section" id="the-mlflow-integration-contract">
+<h3>The MLflow Integration Contract<a class="headerlink" href="#the-mlflow-integration-contract" title="Permalink to this heading"></a></h3>
+<p>Collie components inherit from <code class="docutils literal notranslate"><span class="pre">MLflowIntegration</span></code> which provides:</p>
+</div>
+</div>
+<div class="section" id="available-mlflow-methods">
+<h2>Available MLflow Methods<a class="headerlink" href="#available-mlflow-methods" title="Permalink to this heading"></a></h2>
+<div class="section" id="core-logging-methods">
+<h3>Core Logging Methods<a class="headerlink" href="#core-logging-methods" title="Permalink to this heading"></a></h3>
+<div class="section" id="log-parameters">
+<h4>Log Parameters<a class="headerlink" href="#log-parameters" title="Permalink to this heading"></a></h4>
+<p>Log parameters to track configuration and hyperparameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="c1"># Log single parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;learning_rate&quot;</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+
+        <span class="c1"># Log multiple parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+            <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+            <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;adam&quot;</span>
+        <span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="log-metrics">
+<h4>Log Metrics<a class="headerlink" href="#log-metrics" title="Permalink to this heading"></a></h4>
+<p>Log metrics to track model performance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="c1"># Log single metric</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+
+        <span class="c1"># Log multiple metrics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">({</span>
+            <span class="s2">&quot;precision&quot;</span><span class="p">:</span> <span class="mf">0.93</span><span class="p">,</span>
+            <span class="s2">&quot;recall&quot;</span><span class="p">:</span> <span class="mf">0.94</span><span class="p">,</span>
+            <span class="s2">&quot;f1_score&quot;</span><span class="p">:</span> <span class="mf">0.935</span>
+        <span class="p">})</span>
+
+        <span class="c1"># Log metric at specific step (for training curves)</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">train_one_epoch</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="log-artifacts">
+<h4>Log Artifacts<a class="headerlink" href="#log-artifacts" title="Permalink to this heading"></a></h4>
+<p>Log files, plots, and other artifacts:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="c1"># Log a single file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;confusion_matrix.png&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Log entire directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifacts</span><span class="p">(</span><span class="s2">&quot;evaluation_results/&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Log dict as JSON artifact</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_dict</span><span class="p">({</span>
+            <span class="s2">&quot;feature_importance&quot;</span><span class="p">:</span> <span class="n">importance_dict</span>
+        <span class="p">},</span> <span class="s2">&quot;feature_importance.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="load-models">
+<h4>Load Models<a class="headerlink" href="#load-models" title="Permalink to this heading"></a></h4>
+<p>Load models from MLflow registry:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="c1"># Load production model</span>
+        <span class="n">prod_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;iris_classifier&quot;</span><span class="p">,</span>
+            <span class="n">stage</span><span class="o">=</span><span class="s2">&quot;Production&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Load specific version</span>
+        <span class="n">latest_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;iris_classifier&quot;</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="mi">5</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="advanced-features">
+<h2>Advanced Features<a class="headerlink" href="#advanced-features" title="Permalink to this heading"></a></h2>
+<div class="section" id="run-management">
+<h3>Run Management<a class="headerlink" href="#run-management" title="Permalink to this heading"></a></h3>
+<div class="section" id="context-managers">
+<h4>Context Managers<a class="headerlink" href="#context-managers" title="Permalink to this heading"></a></h4>
+<p>Use context managers for nested runs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="c1"># Parent run (handled by Orchestrator)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;parent_run&quot;</span><span class="p">):</span>
+
+            <span class="c1"># Child run for cross-validation</span>
+            <span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span>
+                    <span class="n">run_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fold_</span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">nested</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cv_score_fold_</span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="experiment-management">
+<h3>Experiment Management<a class="headerlink" href="#experiment-management" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get current experiment</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">get_experiment</span><span class="p">()</span>
+
+<span class="c1"># Get experiment by name</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">get_experiment_by_name</span><span class="p">(</span><span class="s2">&quot;my_experiment&quot;</span><span class="p">)</span>
+
+<span class="c1"># Set experiment</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">set_experiment</span><span class="p">(</span><span class="s2">&quot;new_experiment&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tagging">
+<h3>Tagging<a class="headerlink" href="#tagging" title="Permalink to this heading"></a></h3>
+<p>Add tags for better organization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="c1"># Set tags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">,</span> <span class="s2">&quot;random_forest&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">set_tags</span><span class="p">({</span>
+            <span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="s2">&quot;ml-team&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;customer-churn&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;v2&quot;</span>
+        <span class="p">})</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="mlflow-methods-reference">
+<h2>MLflow Methods Reference<a class="headerlink" href="#mlflow-methods-reference" title="Permalink to this heading"></a></h2>
+<p>Complete list of available MLflow methods through <code class="docutils literal notranslate"><span class="pre">self.mlflow</span></code>:</p>
+<p>For more details on MLflow functionality, see the
+<a class="reference external" href="https://mlflow.org/docs/latest/">MLflow documentation</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core_concepts.html" class="btn btn-neutral float-left" title="Core Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/core.html" class="btn btn-neutral float-right" title="Core API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ChingHuanChiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

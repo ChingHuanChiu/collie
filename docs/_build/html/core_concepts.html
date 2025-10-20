@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Concepts &mdash; Collie 0.1.0-beta documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MLflow Integration" href="mlflow_integration.html" />
+    <link rel="prev" title="Getting Started" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Collie
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#understanding-collie-s-architecture">Understanding Collie’s Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#component-lifecycle">Component Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-pipeline-flow">The Pipeline Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components-in-detail">Components in Detail</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transformer">Transformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#trainer">Trainer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tuner">Tuner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#evaluator">Evaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pusher">Pusher</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#event-based-data-flow">Event-Based Data Flow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#event-and-payload-system">Event and Payload System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-passing-between-components">Data Passing Between Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-comparison">Model Comparison</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Collie</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Core Concepts</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core_concepts.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="core-concepts">
+<h1>Core Concepts<a class="headerlink" href="#core-concepts" title="Permalink to this heading"></a></h1>
+<div class="section" id="understanding-collie-s-architecture">
+<h2>Understanding Collie’s Architecture<a class="headerlink" href="#understanding-collie-s-architecture" title="Permalink to this heading"></a></h2>
+<p>Collie is built on three core principles:</p>
+<ol class="arabic simple">
+<li><p><strong>Modular Components</strong> - Each stage of the ML pipeline is a separate component</p></li>
+<li><p><strong>Event-Driven</strong> - Components communicate through events</p></li>
+<li><p><strong>MLflow Integration</strong> - Deep integration for tracking and model management</p></li>
+</ol>
+</div>
+<div class="section" id="component-lifecycle">
+<h2>Component Lifecycle<a class="headerlink" href="#component-lifecycle" title="Permalink to this heading"></a></h2>
+<p>Every Collie component follows this lifecycle:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>1. Initialize → 2. Execute → 3. Log to MLflow → 4. Emit Event → 5. Next Component
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-pipeline-flow">
+<h2>The Pipeline Flow<a class="headerlink" href="#the-pipeline-flow" title="Permalink to this heading"></a></h2>
+<p>A typical Collie pipeline:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Raw Data → Transformer → Trainer → Tuner → Evaluator → Pusher → Deployed Model
+                ↓            ↓        ↓         ↓          ↓
+             MLflow      MLflow   MLflow    MLflow     MLflow
+           (data log)  (params) (trials)  (metrics)  (register)
+</pre></div>
+</div>
+</div>
+<div class="section" id="components-in-detail">
+<h2>Components in Detail<a class="headerlink" href="#components-in-detail" title="Permalink to this heading"></a></h2>
+<div class="section" id="transformer">
+<h3>Transformer<a class="headerlink" href="#transformer" title="Permalink to this heading"></a></h3>
+<p><strong>Purpose:</strong> Data preprocessing and feature engineering</p>
+<p><strong>Responsibilities:</strong>
+- Load and clean data
+- Feature engineering
+- Data validation
+- Train/test split</p>
+<p><strong>MLflow Usage:</strong>
+- Log input datasets
+- Log transformation parameters
+- Log data statistics</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">TransformerPayload</span>
+
+<span class="k">class</span> <span class="nc">MyTransformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Load data</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;data.csv&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Log input data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_input_data</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="s2">&quot;training&quot;</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="s2">&quot;data.csv&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Feature engineering</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;new_feature&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;feature1&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;feature2&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Log stats</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+            <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
+            <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="trainer">
+<h3>Trainer<a class="headerlink" href="#trainer" title="Permalink to this heading"></a></h3>
+<p><strong>Purpose:</strong> Model training</p>
+<p><strong>Responsibilities:</strong>
+- Train machine learning models
+- Log hyperparameters
+- Log training metrics
+- Save model artifacts</p>
+<p><strong>MLflow Usage:</strong>
+- Log hyperparameters
+- Log training metrics (loss, accuracy, etc.)
+- Log model automatically</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">TrainerPayload</span>
+
+<span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Log hyperparameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+            <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+            <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span>
+        <span class="p">})</span>
+
+        <span class="c1"># Training loop</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+
+        <span class="c1"># Return model in payload</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">train_loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span>
+                <span class="n">val_loss</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tuner">
+<h3>Tuner<a class="headerlink" href="#tuner" title="Permalink to this heading"></a></h3>
+<p><strong>Purpose:</strong> Hyperparameter optimization</p>
+<p><strong>Responsibilities:</strong>
+- Search hyperparameter space
+- Track trials
+- Select best parameters</p>
+<p><strong>MLflow Usage:</strong>
+- Create nested runs for each trial
+- Log trial parameters and metrics
+- Log best parameters</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">TunerPayload</span>
+
+<span class="k">class</span> <span class="nc">MyTuner</span><span class="p">(</span><span class="n">Tuner</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">best_score</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">best_params</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">param_grid</span><span class="p">:</span>
+            <span class="c1"># Each trial gets its own run</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">nested</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+                <span class="n">score</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;cv_score&quot;</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
+                    <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
+                    <span class="n">best_params</span> <span class="o">=</span> <span class="n">params</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_dict</span><span class="p">(</span><span class="n">best_params</span><span class="p">,</span> <span class="s2">&quot;best_params.json&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TunerPayload</span><span class="p">(</span>
+                <span class="n">hyperparameters</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">validation_data</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">test_data</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="evaluator">
+<h3>Evaluator<a class="headerlink" href="#evaluator" title="Permalink to this heading"></a></h3>
+<p><strong>Purpose:</strong> Model evaluation</p>
+<p><strong>Responsibilities:</strong>
+- Evaluate model performance
+- Compare with baseline/production models
+- Generate evaluation reports
+- Decide if model should be deployed</p>
+<p><strong>MLflow Usage:</strong>
+- Log evaluation metrics
+- Log evaluation plots
+- Load production model for comparison</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">EvaluatorPayload</span>
+<span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span><span class="p">,</span> <span class="n">ModelFlavor</span>
+
+<span class="k">class</span> <span class="nc">MyEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">test_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">test_data</span>
+        <span class="n">X_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Evaluate</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+        <span class="n">experiment_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+
+        <span class="c1"># Log metrics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;experiment_accuracy&quot;</span><span class="p">,</span> <span class="n">experiment_accuracy</span><span class="p">)</span>
+
+        <span class="c1"># Compare with production</span>
+        <span class="n">prod_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_latest_model</span><span class="p">(</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span><span class="p">,</span>
+            <span class="n">stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
+            <span class="n">flavor</span><span class="o">=</span><span class="n">ModelFlavor</span><span class="o">.</span><span class="n">SKLEARN</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">prod_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">production_accuracy</span> <span class="o">=</span> <span class="n">prod_model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+            <span class="n">is_better</span> <span class="o">=</span> <span class="n">experiment_accuracy</span> <span class="o">&gt;</span> <span class="n">production_accuracy</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">production_accuracy</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">is_better</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span>
+            <span class="s2">&quot;promotion_decision&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;promote&quot;</span> <span class="k">if</span> <span class="n">is_better</span> <span class="k">else</span> <span class="s2">&quot;keep_current&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">EvaluatorPayload</span><span class="p">(</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;experiment_accuracy&quot;</span><span class="p">:</span> <span class="n">experiment_accuracy</span><span class="p">,</span>
+                        <span class="s2">&quot;production_accuracy&quot;</span><span class="p">:</span> <span class="n">production_accuracy</span><span class="p">,</span>
+                        <span class="s2">&quot;accuracy_improvement&quot;</span><span class="p">:</span> <span class="n">experiment_accuracy</span> <span class="o">-</span> <span class="n">production_accuracy</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="n">is_better_than_production</span><span class="o">=</span><span class="n">is_better</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pusher">
+<h3>Pusher<a class="headerlink" href="#pusher" title="Permalink to this heading"></a></h3>
+<p><strong>Purpose:</strong> Model deployment</p>
+<p><strong>Responsibilities:</strong>
+- Register model to MLflow Model Registry
+- Transition model to appropriate stage
+- Tag deployed models
+- Handle deployment logic</p>
+<p><strong>MLflow Usage:</strong>
+- Register model
+- Set tags
+- Transition model stages</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">PusherPayload</span>
+
+<span class="k">class</span> <span class="nc">MyPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">is_better_than_production</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="s2">&quot;skipped&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+                <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;skipped&quot;</span><span class="p">,</span>
+                    <span class="n">model_version</span><span class="o">=</span><span class="kc">None</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Get current run</span>
+        <span class="n">run_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">active_run</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span>
+        <span class="n">model_uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;runs:/</span><span class="si">{</span><span class="n">run_id</span><span class="si">}</span><span class="s2">/model&quot;</span>
+
+        <span class="c1"># Register model</span>
+        <span class="n">model_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">register_model</span><span class="p">(</span>
+            <span class="n">model_uri</span><span class="o">=</span><span class="n">model_uri</span><span class="p">,</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Tag the model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">set_tags</span><span class="p">({</span>
+            <span class="s2">&quot;deployed&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;deployment_date&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span><span class="p">,</span>
+                <span class="n">model_version</span><span class="o">=</span><span class="n">model_version</span><span class="o">.</span><span class="n">version</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="event-based-data-flow">
+<h2>Event-Based Data Flow<a class="headerlink" href="#event-based-data-flow" title="Permalink to this heading"></a></h2>
+<div class="section" id="event-and-payload-system">
+<h3>Event and Payload System<a class="headerlink" href="#event-and-payload-system" title="Permalink to this heading"></a></h3>
+<p>Collie uses an event-driven architecture where components communicate through <code class="docutils literal notranslate"><span class="pre">Event</span></code> objects containing typed <code class="docutils literal notranslate"><span class="pre">Payload</span></code> data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.contracts</span> <span class="kn">import</span> <span class="n">PipelineContext</span>
+
+<span class="c1"># Event structure</span>
+<span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span>  <span class="c1"># Optional event type</span>
+    <span class="n">payload</span><span class="o">=</span><span class="n">payload_object</span><span class="p">,</span>      <span class="c1"># Typed payload (TransformerPayload, TrainerPayload, etc.)</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">PipelineContext</span><span class="p">()</span>    <span class="c1"># Shared context for metadata</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Event Context for Metadata:</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">event.context</span></code> can be used to store metadata that doesn’t belong in the payload:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">Transformer</span><span class="p">,</span> <span class="n">TransformerPayload</span>
+
+<span class="k">class</span> <span class="nc">MyComponent</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Access shared context for metadata</span>
+        <span class="n">processing_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># Do work...</span>
+
+        <span class="c1"># Store metadata in context</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;processing_time&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">processing_start</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;component_version&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">processed_data</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span>  <span class="c1"># Pass context along</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-passing-between-components">
+<h3>Data Passing Between Components<a class="headerlink" href="#data-passing-between-components" title="Permalink to this heading"></a></h3>
+<p>Components pass data through Event payloads:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">TrainerPayload</span><span class="p">,</span> <span class="n">EvaluatorPayload</span>
+
+<span class="c1"># Transformer output</span>
+<span class="k">class</span> <span class="nc">DataLoader</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Load and process data</span>
+        <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">load_and_split_data</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+<span class="c1"># Trainer uses transformer output</span>
+<span class="k">class</span> <span class="nc">ModelTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+        <span class="n">X_train</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_train</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+
+        <span class="c1"># ... train model ...</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">trained_model</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+<span class="c1"># Evaluator uses trainer output</span>
+<span class="k">class</span> <span class="nc">ModelEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">test_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">test_data</span>
+        <span class="n">X_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Evaluate model</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+        <span class="n">accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">EvaluatorPayload</span><span class="p">(</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">}],</span>
+                <span class="n">is_better_than_production</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="model-comparison">
+<h3>Model Comparison<a class="headerlink" href="#model-comparison" title="Permalink to this heading"></a></h3>
+<p>Compare models using MLflow:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">EvaluatorPayload</span>
+<span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span><span class="p">,</span> <span class="n">ModelFlavor</span>
+
+
+<span class="k">class</span> <span class="nc">ModelEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Load production model</span>
+        <span class="n">prod_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_latest_model</span><span class="p">(</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span><span class="p">,</span>
+            <span class="n">stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
+            <span class="n">flavor</span><span class="o">=</span><span class="n">ModelFlavor</span><span class="o">.</span><span class="n">SKLEARN</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Get new model and test data</span>
+        <span class="n">new_model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">test_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">test_data</span>
+        <span class="n">X_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+
+        <span class="n">new_score</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">prod_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prod_score</span> <span class="o">=</span> <span class="n">prod_model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+            <span class="n">improvement</span> <span class="o">=</span> <span class="n">new_score</span> <span class="o">-</span> <span class="n">prod_score</span>
+            <span class="n">is_better</span> <span class="o">=</span> <span class="n">new_score</span> <span class="o">&gt;</span> <span class="n">prod_score</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prod_score</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">improvement</span> <span class="o">=</span> <span class="n">new_score</span>
+            <span class="n">is_better</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">({</span>
+            <span class="s2">&quot;new_model_score&quot;</span><span class="p">:</span> <span class="n">new_score</span><span class="p">,</span>
+            <span class="s2">&quot;prod_model_score&quot;</span><span class="p">:</span> <span class="n">prod_score</span><span class="p">,</span>
+            <span class="s2">&quot;improvement&quot;</span><span class="p">:</span> <span class="n">improvement</span>
+        <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">EvaluatorPayload</span><span class="p">(</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;new_model_score&quot;</span><span class="p">:</span> <span class="n">new_score</span><span class="p">,</span>
+                        <span class="s2">&quot;prod_model_score&quot;</span><span class="p">:</span> <span class="n">prod_score</span><span class="p">,</span>
+                        <span class="s2">&quot;improvement&quot;</span><span class="p">:</span> <span class="n">improvement</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="n">is_better_than_production</span><span class="o">=</span><span class="n">is_better</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Explore the <a class="reference internal" href="api/core.html"><span class="doc">Core API Reference</span></a> for detailed API reference</p></li>
+<li><p>See <a class="reference internal" href="mlflow_integration.html"><span class="doc">MLflow Integration</span></a> for MLflow usage patterns</p></li>
+<li><p>Check out example pipelines in the <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mlflow_integration.html" class="btn btn-neutral float-right" title="MLflow Integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ChingHuanChiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

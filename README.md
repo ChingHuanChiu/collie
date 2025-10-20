@@ -1,6 +1,13 @@
 # Collie 🐕
 
+[![PyPI version](https://badge.fury.io/py/collie-mlops.svg)](https://badge.fury.io/py/collie-mlops)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-sphinx-blue.svg)](docs/_build/html/index.html)
+
 A Lightweight MLOps Framework for Machine Learning Workflows
+
+📚 **[Full Documentation](docs/_build/html/index.html)** | 🚀 **[Getting Started](docs/_build/html/getting_started.html)** | 🔧 **[MLflow Integration Guide](docs/_build/html/mlflow_integration.html)** | 📖 **[API Reference](docs/_build/html/api/core.html)**
 
 ## Overview
 
@@ -30,8 +37,24 @@ Collie follows an event-driven architecture with the following core components:
 ### Installation
 
 ```bash
-pip install -r requirements.txt
+# Basic installation
+pip install collie-mlops
+
+# With specific ML framework support
+pip install collie-mlops[sklearn]
+pip install collie-mlops[pytorch]
+pip install collie-mlops[xgboost]
+pip install collie-mlops[lightgbm]
+pip install collie-mlops[transformers]
+
+# With all ML frameworks
+pip install collie-mlops[all]
 ```
+
+### Prerequisites
+
+- Python >= 3.8
+- MLflow tracking server (can be local or remote)
 
 ### Basic Usage
 
@@ -157,22 +180,85 @@ mlflow server \
 
 ## Supported Frameworks
 
-Collie supports multiple ML frameworks through its model flavor system: the currently supported flavors are
+Collie supports multiple ML frameworks through its model flavor system:
 
-- **PyTorch**: Deep learning models
-- **scikit-learn**: Traditional ML algorithms
-- **XGBoost**: Gradient boosting
-- **LightGBM**: Gradient boosting
-- **Transformers**: transformers models
+| Framework | Status | Model I/O | Artifact Tracking |
+|-----------|--------|-----------|-------------------|
+| **PyTorch** | ✅ | ✅ | ✅ |
+| **scikit-learn** | ✅ | ✅ | ✅ |
+| **XGBoost** | ✅ | ✅ | ✅ |
+| **LightGBM** | ✅ | ✅ | ✅ |
+| **Transformers** | ✅ | ✅ | ✅ |
 
+
+## Examples
+
+Check out the [examples directory](./example/mlp) for complete working examples:
+- [MLP Classification Pipeline](./example/mlp/mlp.ipynb) - End-to-end example with PyTorch
+
+## Documentation
+
+📚 **Complete documentation is available!**
+
+- **[Getting Started Guide](docs/_build/html/getting_started.html)** - Your first Collie pipeline in 5 minutes
+- **[MLflow Integration Guide](docs/_build/html/mlflow_integration.html)** - Complete guide to all `self.mlflow` methods
+- **[Core Concepts](docs/_build/html/core_concepts.html)** - Understand Collie's architecture
+- **[API Reference](docs/_build/html/api/core.html)** - Complete API documentation
+- **[Quick Reference Card](docs/MLFLOW_QUICK_REFERENCE.md)** - Cheat sheet for MLflow methods
+
+### Building Documentation Locally
+
+```bash
+cd docs
+make html
+open _build/html/index.html  # macOS
+```
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and changes.
+
+## Roadmap
+
+- [x] Complete Sphinx documentation with MLflow methods
+- [ ] CLI tool for project scaffolding
+- [ ] TensorFlow/Keras support
+- [ ] Distributed training support
+- [ ] Model monitoring and drift detection
+- [ ] Integration with Airflow/Kubeflow
+- [ ] Published documentation on Read the Docs
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Citation
+
+If you use Collie in your research, please cite:
+
+```bibtex
+@software{collie2025,
+  author = {ChingHuanChiu},
+  title = {Collie: A Lightweight MLOps Framework},
+  year = {2025},
+  url = {https://github.com/ChingHuanChiu/collie}
+}
+```
+
+## Acknowledgments
+
+- Built with ❤️ using [MLflow](https://mlflow.org/)
+- Inspired by modern MLOps best practices
+- Documentation powered by [Sphinx](https://www.sphinx-doc.org/)
 
 ## Support
 
-For questions and support, please open an issue on the GitHub repository.
+For questions and support, please open an issue on the [GitHub repository](https://github.com/ChingHuanChiu/collie/issues).
+
 
 ---
 

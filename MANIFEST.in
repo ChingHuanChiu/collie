@@ -1,0 +1,17 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include requirements.txt
+include pytest.ini
+
+recursive-include collie *.py
+recursive-include collie py.typed
+
+recursive-exclude tests *
+recursive-exclude example *
+recursive-exclude deploy *
+recursive-exclude __pycache__ *
+recursive-exclude *.pyc
+recursive-exclude *.pyo
+recursive-exclude .DS_Store

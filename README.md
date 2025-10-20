@@ -53,7 +53,7 @@ pip install collie-mlops[all]
 
 ### Prerequisites
 
-- Python >= 3.8
+- Python >= 3.10
 - MLflow tracking server (can be local or remote)
 
 ### Basic Usage
@@ -248,13 +248,6 @@ If you use Collie in your research, please cite:
   url = {https://github.com/ChingHuanChiu/collie}
 }
 ```
-
-## Acknowledgments
-
-- Built with ❤️ using [MLflow](https://mlflow.org/)
-- Inspired by modern MLOps best practices
-- Documentation powered by [Sphinx](https://www.sphinx-doc.org/)
-
 ## Support
 
 For questions and support, please open an issue on the [GitHub repository](https://github.com/ChingHuanChiu/collie/issues).

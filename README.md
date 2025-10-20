@@ -206,22 +206,6 @@ Check out the [examples directory](./example/mlp) for complete working examples:
 - **[API Reference](docs/_build/html/api/core.html)** - Complete API documentation
 - **[Quick Reference Card](docs/MLFLOW_QUICK_REFERENCE.md)** - Cheat sheet for MLflow methods
 
-### Building Documentation Locally
-
-```bash
-cd docs
-make html
-open _build/html/index.html  # macOS
-```
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history and changes.
-
 ## Roadmap
 
 - [x] Complete Sphinx documentation with MLflow methods

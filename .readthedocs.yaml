@@ -27,8 +27,4 @@ python:
   install:
     - method: pip
       path: .
-      extra_requirements:
-        - docs
-    - method: pip
-      packages:
-        - sphinx-autodoc-typehints
+    - requirements: docs/requirements.txt

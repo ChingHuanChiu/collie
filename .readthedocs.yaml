@@ -29,3 +29,6 @@ python:
       path: .
       extra_requirements:
         - docs
+    - method: pip
+      packages:
+        - sphinx-autodoc-typehints

@@ -128,11 +128,7 @@ Trainer
            
            # Return model in payload
            return Event(
-               payload=TrainerPayload(
-                   model=model,
-                   train_loss=loss,
-                   val_loss=None
-               )
+               payload=TrainerPayload(model=model)
            )
 
 Tuner
@@ -258,59 +254,71 @@ Evaluator
 Pusher
 ~~~~~~
 
-**Purpose:** Model deployment
+**Purpose:** Model deployment to production environments
 
 **Responsibilities:**
-- Register model to MLflow Model Registry
-- Transition model to appropriate stage
-- Tag deployed models
-- Handle deployment logic
+- Deploy models to external services (APIs, Elasticsearch, etc.)
+- Transition model stages in MLflow
+- Handle deployment configurations
+- Log deployment metadata
 
 **MLflow Usage:**
-- Register model
-- Set tags
-- Transition model stages
+- Transition model stages (Staging → Production)
+- Log deployment parameters and tags
 
-**Example:**
+**Example: Deploy to External Service**
 
 .. code-block:: python
 
-   from collie import Event
+   from collie import Event, Pusher
    from collie.core import PusherPayload
+   import requests
    
-   class MyPusher(Pusher):
+   class ModelDeploymentPusher(Pusher):
        def handle(self, event: Event) -> Event:
-           if not event.payload.is_better_than_production:
-               self.mlflow.log_param("deployment", "skipped")
+           # Get model from payload
+           model = event.payload.model
+           
+           # Example: Deploy to Elasticsearch or REST API
+           deployment_endpoint = "https://your-ml-engine.com/api/models"
+           
+           try:
+               # Serialize and post model
+               response = requests.post(
+                   deployment_endpoint,
+                   json={
+                       "model_name": "iris_classifier",
+                       "model_data": serialize_model(model),
+                       "metadata": event.payload.get_extra("model_metadata", {})
+                   }
+               )
+               
+               # Log deployment info
+               self.mlflow.log_params({
+                   "deployment_endpoint": deployment_endpoint,
+                   "deployment_status": response.status_code
+               })
+               
                return Event(
                    payload=PusherPayload(
-                       status="skipped",
+                       model_uri=f"external://{response.json()['model_id']}",
+                       status="deployed",
+                       model_version="1.0",
+                       extra_data={
+                           "deployment_id": response.json()['model_id'],
+                           "endpoint": deployment_endpoint
+                       }
+                   )
+               )
+           except Exception as e:
+               self.mlflow.log_param("deployment_error", str(e))
+               return Event(
+                   payload=PusherPayload(
+                       model_uri="",
+                       status="failed",
                        model_version=None
                    )
                )
-           
-           # Get current run
-           run_id = self.mlflow.active_run().info.run_id
-           model_uri = f"runs:/{run_id}/model"
-           
-           # Register model
-           model_version = self.mlflow.register_model(
-               model_uri=model_uri,
-               model_name=self.registered_model_name
-           )
-           
-           # Tag the model
-           self.mlflow.set_tags({
-               "deployed": "true",
-               "deployment_date": datetime.now().isoformat()
-           })
-           
-           return Event(
-               payload=PusherPayload(
-                   status="deployed",
-                   model_version=model_version.version
-               )
-           )
 
 Event-Based Data Flow
 ---------------------
@@ -320,45 +328,66 @@ Event and Payload System
 
 Collie uses an event-driven architecture where components communicate through ``Event`` objects containing typed ``Payload`` data:
 
+**Passing Data Between Components:**
+
+1. **Standard Fields**: Use predefined payload fields for common data
+2. **Extra Data**: Use ``extra_data`` for custom/experimental data
+
 .. code-block:: python
 
-   from collie import Event
-   from collie.contracts import PipelineContext
+   from collie import Event, TransformerPayload
    
-   # Event structure
+   # Pass data using standard fields
    event = Event(
-       type=EventType.DATA_READY,  # Optional event type
-       payload=payload_object,      # Typed payload (TransformerPayload, TrainerPayload, etc.)
-       context=PipelineContext()    # Shared context for metadata
+       payload=TransformerPayload(
+           train_data=df,
+           validation_data=val_df,
+           test_data=test_df
+       )
    )
+   
+   # Pass custom data using extra_data
+   event = Event(
+       payload=TransformerPayload(
+           train_data=df,
+           extra_data={
+               "feature_names": ["age", "income"],
+               "preprocessing_steps": ["scaling", "encoding"],
+               "data_version": "v2.1"
+           }
+       )
+   )
+Accessing Data in Components
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Event Context for Metadata:**
-
-The ``event.context`` can be used to store metadata that doesn't belong in the payload:
+Components receive data through ``event.payload`` and can access both standard fields and custom data:
 
 .. code-block:: python
 
-   from collie import Event
-   from collie.core import Transformer, TransformerPayload
+   from collie import Event, Trainer, TrainerPayload
    
-   class MyComponent(Transformer):
+   class MyTrainer(Trainer):
        def handle(self, event: Event) -> Event:
-           # Access shared context for metadata
-           processing_start = time.time()
+           # Access standard payload fields
+           train_data = event.payload.train_data
+           val_data = event.payload.validation_data
            
-           # Do work...
+           # Access custom data from extra_data
+           feature_names = event.payload.get_extra("feature_names", [])
+           hyperparams = event.payload.get_extra("best_params", {})
            
-           # Store metadata in context
-           event.context.set("processing_time", time.time() - processing_start)
-           event.context.set("component_version", "1.0.0")
+           # Train model
+           model = train_model(train_data, hyperparams)
            
+           # Return new payload with results
            return Event(
-               payload=TransformerPayload(
-                   train_data=processed_data,
-                   validation_data=None,
-                   test_data=None
-               ),
-               context=event.context  # Pass context along
+               payload=TrainerPayload(
+                   model=model,
+                   extra_data={
+                       "training_time": 120.5,
+                       "n_epochs": 50
+                   }
+               )
            )
 
 Data Passing Between Components
@@ -420,6 +449,92 @@ Components pass data through Event payloads:
                    is_better_than_production=True
                )
            )
+
+
+Passing Custom Data
+~~~~~~~~~~~~~~~~~~~
+
+Each Payload has an ``extra_data`` field for custom data beyond standard fields:
+
+**Standard Fields vs Extra Data:**
+
+.. code-block:: python
+
+   from collie import Event
+   from collie.core import TransformerPayload, TrainerPayload
+   
+   # Use standard fields for common data
+   class MyTransformer(Transformer):
+       def handle(self, event: Event) -> Event:
+           return Event(
+               payload=TransformerPayload(
+                   # Standard fields - strongly typed
+                   train_data=train_df,
+                   validation_data=val_df,
+                   test_data=test_df,
+                   
+                   # Custom data - flexible
+                   extra_data={
+                       "feature_names": ["age", "income", "score"],
+                       "data_source": "database",
+                       "preprocessing_steps": ["normalization", "encoding"],
+                       "data_version": "v2.1"
+                   }
+               )
+           )
+
+**Accessing Extra Data:**
+
+.. code-block:: python
+
+   class MyTrainer(Trainer):
+       def handle(self, event: Event) -> Event:
+           # Access standard fields
+           train_data = event.payload.train_data
+           
+           # Access extra data using helper methods (recommended)
+           feature_names = event.payload.get_extra("feature_names", [])
+           data_version = event.payload.get_extra("data_version", "unknown")
+           
+           # Or check if exists first
+           if event.payload.has_extra("preprocessing_steps"):
+               steps = event.payload.get_extra("preprocessing_steps")
+           
+           # Log custom info
+           self.mlflow.log_params({
+               "data_version": data_version,
+               "n_features": len(feature_names)
+           })
+           
+           # Train model...
+           
+           return Event(
+               payload=TrainerPayload(
+                   model=model,
+                   extra_data={
+                       "training_time": training_time,
+                       "early_stopping_epoch": best_epoch,
+                       "optimizer": "Adam",
+                       "train_loss": loss,  # Optional metrics via extra_data
+                       "val_loss": val_loss,
+                       **event.payload.extra_data  # Keep previous extra data
+                   }
+               )
+           )
+
+**Common Use Cases for Extra Data:**
+
+1. **Transformer**: Feature engineering metadata, data quality metrics
+2. **Tuner**: Trial history, convergence info, search space details
+3. **Trainer**: Training curves, checkpoints, optimizer state
+4. **Evaluator**: Detailed reports, plot file paths, per-class metrics
+5. **Pusher**: Deployment endpoints, container IDs, rollback info
+
+**Best Practices:**
+
+- Use **standard fields** for data that all pipelines need (model, train_data, metrics)
+- Use **extra_data** for pipeline-specific or experimental data
+- Use **event.context** for metadata that doesn't belong in the payload (timestamps, versions)
 
 
 Model Comparison

@@ -62,7 +62,12 @@ Basic Usage
                payload=TransformerPayload(
                    train_data=train_data,
                    validation_data=None,
-                   test_data=None
+                   test_data=None,
+                   # Optional: pass custom data
+                   extra_data={
+                       "feature_names": data.feature_names.tolist(),
+                       "n_classes": len(data.target_names)
+                   }
                )
            )
 
@@ -73,19 +78,20 @@ Basic Usage
            X = train_data.drop("target", axis=1)
            y = train_data["target"]
            
+           # Access extra data if available
+           feature_names = event.payload.extra_data.get("feature_names", [])
+           
            model = RandomForestClassifier()
            model.fit(X, y)
            accuracy = model.score(X, y)
            
            # Log metrics to MLflow
            self.mlflow.log_metric("accuracy", accuracy)
+           if feature_names:
+               self.mlflow.log_param("n_features", len(feature_names))
            
            return Event(
-               payload=TrainerPayload(
-                   model=model,
-                   train_loss=1 - accuracy,
-                   val_loss=None
-               )
+               payload=TrainerPayload(model=model)
            )
 
    # Run the pipeline
@@ -106,6 +112,7 @@ Table of Contents
 
    getting_started
    core_concepts
+   data_passing
    mlflow_integration
 
 .. toctree::

@@ -47,6 +47,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_passing.html">Data Passing Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
@@ -130,7 +131,12 @@ for building machine learning pipelines with deep MLflow integration.</p>
             <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
                 <span class="n">train_data</span><span class="o">=</span><span class="n">train_data</span><span class="p">,</span>
                 <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="c1"># Optional: pass custom data</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="s2">&quot;n_classes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">target_names</span><span class="p">)</span>
+                <span class="p">}</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -141,19 +147,20 @@ for building machine learning pipelines with deep MLflow integration.</p>
         <span class="n">X</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
 
+        <span class="c1"># Access extra data if available</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
         <span class="n">model</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">()</span>
         <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">accuracy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
         <span class="c1"># Log metrics to MLflow</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">feature_names</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;n_features&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_names</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">train_loss</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">accuracy</span><span class="p">,</span>
-                <span class="n">val_loss</span><span class="o">=</span><span class="kc">None</span>
-            <span class="p">)</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="p">)</span>
 
 <span class="c1"># Run the pipeline</span>
@@ -189,6 +196,17 @@ for building machine learning pipelines with deep MLflow integration.</p>
 <li class="toctree-l2"><a class="reference internal" href="core_concepts.html#components-in-detail">Components in Detail</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_concepts.html#event-based-data-flow">Event-Based Data Flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_concepts.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data_passing.html">Data Passing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#understanding-data-flow-in-collie">Understanding Data Flow in Collie</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#user-friendly-features">User-Friendly Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#three-ways-to-pass-data">Three Ways to Pass Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#decision-tree-which-method-to-use">Decision Tree: Which Method to Use?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#common-patterns">Common Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#complete-example">Complete Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_passing.html#summary">Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a><ul>

@@ -4,9 +4,65 @@ from typing import (
     Optional,
     List,
 )
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 import pandas as pd
+
+
+class BasePayload(BaseModel):
+    """Base class for all payload types with common extra_data functionality."""
+    
+    extra_data: Dict[str, Any] = Field(default_factory=dict)
+    
+    def set_extra(self, key: str, value: Any):
+        """
+        Set a value in extra_data and return self for chaining.
+        
+        Args:
+            key: The key to set
+            value: The value to store
+            
+        Returns:
+            Self for method chaining
+            
+        Example:
+            >>> payload.set_extra("feature_names", ["age", "income"])
+            >>> payload.set_extra("n_classes", 3).set_extra("version", "1.0")
+        """
+        self.extra_data[key] = value
+        return self
+    
+    def get_extra(self, key: str, default: Any = None) -> Any:
+        """
+        Get a value from extra_data with optional default.
+        
+        Args:
+            key: The key to retrieve
+            default: Default value if key doesn't exist
+            
+        Returns:
+            The value or default
+            
+        Example:
+            >>> features = payload.get_extra("feature_names", [])
+        """
+        return self.extra_data.get(key, default)
+    
+    def has_extra(self, key: str) -> bool:
+        """
+        Check if a key exists in extra_data.
+        
+        Args:
+            key: The key to check
+            
+        Returns:
+            True if key exists, False otherwise
+            
+        Example:
+            >>> if payload.has_extra("feature_names"):
+            ...     features = payload.get_extra("feature_names")
+        """
+        return key in self.extra_data
 
 
 class TransformerArtifact(BaseModel):
@@ -27,7 +83,7 @@ class EvaluatorArtifact(BaseModel):
     report: str = "report.json"
 
 
-class TransformerPayload(BaseModel):
+class TransformerPayload(BasePayload):
     train_data: Optional[pd.DataFrame] = None
     validation_data: Optional[pd.DataFrame]  = None
     test_data: Optional[pd.DataFrame]  = None
@@ -35,13 +91,13 @@ class TransformerPayload(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class TrainerPayload(BaseModel):
+class TrainerPayload(BasePayload):
     model: Any = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class TunerPayload(BaseModel):
+class TunerPayload(BasePayload):
     hyperparameters: Dict[str, Any]
     train_data: Optional[pd.DataFrame] = None
     validation_data: Optional[pd.DataFrame]  = None
@@ -50,11 +106,12 @@ class TunerPayload(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class EvaluatorPayload(BaseModel):
- 
+class EvaluatorPayload(BasePayload):
     metrics: List[Dict[str, Any]]
     is_better_than_production: bool
 
 
-class PusherPayload(BaseModel):
+class PusherPayload(BasePayload):
     model_uri: str
+    status: Optional[str] = None
+    model_version: Optional[str] = None

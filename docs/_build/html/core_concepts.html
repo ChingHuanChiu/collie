@@ -21,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="MLflow Integration" href="mlflow_integration.html" />
+    <link rel="next" title="Data Passing Guide" href="data_passing.html" />
     <link rel="prev" title="Getting Started" href="getting_started.html" /> 
 </head>
 
@@ -61,13 +61,16 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#event-based-data-flow">Event-Based Data Flow</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#event-and-payload-system">Event and Payload System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#accessing-data-in-components">Accessing Data in Components</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#data-passing-between-components">Data Passing Between Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#passing-custom-data">Passing Custom Data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#model-comparison">Model Comparison</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="data_passing.html">Data Passing Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
@@ -212,11 +215,7 @@
 
         <span class="c1"># Return model in payload</span>
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">train_loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span>
-                <span class="n">val_loss</span><span class="o">=</span><span class="kc">None</span>
-            <span class="p">)</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="p">)</span>
 </pre></div>
 </div>
@@ -333,53 +332,65 @@
 </div>
 <div class="section" id="pusher">
 <h3>Pusher<a class="headerlink" href="#pusher" title="Permalink to this heading"></a></h3>
-<p><strong>Purpose:</strong> Model deployment</p>
+<p><strong>Purpose:</strong> Model deployment to production environments</p>
 <p><strong>Responsibilities:</strong>
-- Register model to MLflow Model Registry
-- Transition model to appropriate stage
-- Tag deployed models
-- Handle deployment logic</p>
+- Deploy models to external services (APIs, Elasticsearch, etc.)
+- Transition model stages in MLflow
+- Handle deployment configurations
+- Log deployment metadata</p>
 <p><strong>MLflow Usage:</strong>
-- Register model
-- Set tags
-- Transition model stages</p>
-<p><strong>Example:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+- Transition model stages (Staging → Production)
+- Log deployment parameters and tags</p>
+<p><strong>Example: Deploy to External Service</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Pusher</span>
 <span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">PusherPayload</span>
+<span class="kn">import</span> <span class="nn">requests</span>
 
-<span class="k">class</span> <span class="nc">MyPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ModelDeploymentPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">is_better_than_production</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;deployment&quot;</span><span class="p">,</span> <span class="s2">&quot;skipped&quot;</span><span class="p">)</span>
+        <span class="c1"># Get model from payload</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="c1"># Example: Deploy to Elasticsearch or REST API</span>
+        <span class="n">deployment_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://your-ml-engine.com/api/models&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Serialize and post model</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="n">deployment_endpoint</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="s2">&quot;iris_classifier&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;model_data&quot;</span><span class="p">:</span> <span class="n">serialize_model</span><span class="p">(</span><span class="n">model</span><span class="p">),</span>
+                    <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;model_metadata&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Log deployment info</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+                <span class="s2">&quot;deployment_endpoint&quot;</span><span class="p">:</span> <span class="n">deployment_endpoint</span><span class="p">,</span>
+                <span class="s2">&quot;deployment_status&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
+            <span class="p">})</span>
+
             <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
                 <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;skipped&quot;</span><span class="p">,</span>
+                    <span class="n">model_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;external://</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;model_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span><span class="p">,</span>
+                    <span class="n">model_version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+                    <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;deployment_id&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;model_id&#39;</span><span class="p">],</span>
+                        <span class="s2">&quot;endpoint&quot;</span><span class="p">:</span> <span class="n">deployment_endpoint</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;deployment_error&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+                <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
+                    <span class="n">model_uri</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span>
                     <span class="n">model_version</span><span class="o">=</span><span class="kc">None</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-
-        <span class="c1"># Get current run</span>
-        <span class="n">run_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">active_run</span><span class="p">()</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span>
-        <span class="n">model_uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;runs:/</span><span class="si">{</span><span class="n">run_id</span><span class="si">}</span><span class="s2">/model&quot;</span>
-
-        <span class="c1"># Register model</span>
-        <span class="n">model_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">register_model</span><span class="p">(</span>
-            <span class="n">model_uri</span><span class="o">=</span><span class="n">model_uri</span><span class="p">,</span>
-            <span class="n">model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Tag the model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">set_tags</span><span class="p">({</span>
-            <span class="s2">&quot;deployed&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;deployment_date&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
-        <span class="p">})</span>
-
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-            <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span><span class="p">,</span>
-                <span class="n">model_version</span><span class="o">=</span><span class="n">model_version</span><span class="o">.</span><span class="n">version</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -389,40 +400,63 @@
 <div class="section" id="event-and-payload-system">
 <h3>Event and Payload System<a class="headerlink" href="#event-and-payload-system" title="Permalink to this heading"></a></h3>
 <p>Collie uses an event-driven architecture where components communicate through <code class="docutils literal notranslate"><span class="pre">Event</span></code> objects containing typed <code class="docutils literal notranslate"><span class="pre">Payload</span></code> data:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
-<span class="kn">from</span> <span class="nn">collie.contracts</span> <span class="kn">import</span> <span class="n">PipelineContext</span>
+<p><strong>Passing Data Between Components:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Standard Fields</strong>: Use predefined payload fields for common data</p></li>
+<li><p><strong>Extra Data</strong>: Use <code class="docutils literal notranslate"><span class="pre">extra_data</span></code> for custom/experimental data</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">TransformerPayload</span>
 
-<span class="c1"># Event structure</span>
+<span class="c1"># Pass data using standard fields</span>
 <span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span>
-    <span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span>  <span class="c1"># Optional event type</span>
-    <span class="n">payload</span><span class="o">=</span><span class="n">payload_object</span><span class="p">,</span>      <span class="c1"># Typed payload (TransformerPayload, TrainerPayload, etc.)</span>
-    <span class="n">context</span><span class="o">=</span><span class="n">PipelineContext</span><span class="p">()</span>    <span class="c1"># Shared context for metadata</span>
+    <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+        <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+        <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>
+        <span class="n">test_data</span><span class="o">=</span><span class="n">test_df</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Pass custom data using extra_data</span>
+<span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span>
+    <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+        <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+        <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;preprocessing_steps&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;scaling&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;data_version&quot;</span><span class="p">:</span> <span class="s2">&quot;v2.1&quot;</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Event Context for Metadata:</strong></p>
-<p>The <code class="docutils literal notranslate"><span class="pre">event.context</span></code> can be used to store metadata that doesn’t belong in the payload:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
-<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">Transformer</span><span class="p">,</span> <span class="n">TransformerPayload</span>
+</div>
+<div class="section" id="accessing-data-in-components">
+<h3>Accessing Data in Components<a class="headerlink" href="#accessing-data-in-components" title="Permalink to this heading"></a></h3>
+<p>Components receive data through <code class="docutils literal notranslate"><span class="pre">event.payload</span></code> and can access both standard fields and custom data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Trainer</span><span class="p">,</span> <span class="n">TrainerPayload</span>
 
-<span class="k">class</span> <span class="nc">MyComponent</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
-        <span class="c1"># Access shared context for metadata</span>
-        <span class="n">processing_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># Access standard payload fields</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+        <span class="n">val_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">validation_data</span>
 
-        <span class="c1"># Do work...</span>
+        <span class="c1"># Access custom data from extra_data</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">hyperparams</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;best_params&quot;</span><span class="p">,</span> <span class="p">{})</span>
 
-        <span class="c1"># Store metadata in context</span>
-        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;processing_time&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">processing_start</span><span class="p">)</span>
-        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;component_version&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">)</span>
+        <span class="c1"># Train model</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">hyperparams</span><span class="p">)</span>
 
+        <span class="c1"># Return new payload with results</span>
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
-                <span class="n">train_data</span><span class="o">=</span><span class="n">processed_data</span><span class="p">,</span>
-                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span>
-            <span class="p">),</span>
-            <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span>  <span class="c1"># Pass context along</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;training_time&quot;</span><span class="p">:</span> <span class="mf">120.5</span><span class="p">,</span>
+                    <span class="s2">&quot;n_epochs&quot;</span><span class="p">:</span> <span class="mi">50</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 </pre></div>
 </div>
@@ -484,6 +518,86 @@
         <span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="passing-custom-data">
+<h3>Passing Custom Data<a class="headerlink" href="#passing-custom-data" title="Permalink to this heading"></a></h3>
+<p>Each Payload has an <code class="docutils literal notranslate"><span class="pre">extra_data</span></code> field for custom data beyond standard fields:</p>
+<p><strong>Standard Fields vs Extra Data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">TrainerPayload</span>
+
+<span class="c1"># Use standard fields for common data</span>
+<span class="k">class</span> <span class="nc">MyTransformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="c1"># Standard fields - strongly typed</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">train_df</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="n">val_df</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="n">test_df</span><span class="p">,</span>
+
+                <span class="c1"># Custom data - flexible</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">,</span> <span class="s2">&quot;score&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;data_source&quot;</span><span class="p">:</span> <span class="s2">&quot;database&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;preprocessing_steps&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;normalization&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;data_version&quot;</span><span class="p">:</span> <span class="s2">&quot;v2.1&quot;</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Accessing Extra Data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Access standard fields</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+
+        <span class="c1"># Access extra data using helper methods (recommended)</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">data_version</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;data_version&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Or check if exists first</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">has_extra</span><span class="p">(</span><span class="s2">&quot;preprocessing_steps&quot;</span><span class="p">):</span>
+            <span class="n">steps</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;preprocessing_steps&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Log custom info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+            <span class="s2">&quot;data_version&quot;</span><span class="p">:</span> <span class="n">data_version</span><span class="p">,</span>
+            <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_names</span><span class="p">)</span>
+        <span class="p">})</span>
+
+        <span class="c1"># Train model...</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;training_time&quot;</span><span class="p">:</span> <span class="n">training_time</span><span class="p">,</span>
+                    <span class="s2">&quot;early_stopping_epoch&quot;</span><span class="p">:</span> <span class="n">best_epoch</span><span class="p">,</span>
+                    <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;Adam&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;train_loss&quot;</span><span class="p">:</span> <span class="n">loss</span><span class="p">,</span>  <span class="c1"># Optional metrics via extra_data</span>
+                    <span class="s2">&quot;val_loss&quot;</span><span class="p">:</span> <span class="n">val_loss</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span>  <span class="c1"># Keep previous extra data</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Common Use Cases for Extra Data:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Transformer</strong>: Feature engineering metadata, data quality metrics</p></li>
+<li><p><strong>Tuner</strong>: Trial history, convergence info, search space details</p></li>
+<li><p><strong>Trainer</strong>: Training curves, checkpoints, optimizer state</p></li>
+<li><p><strong>Evaluator</strong>: Detailed reports, plot file paths, per-class metrics</p></li>
+<li><p><strong>Pusher</strong>: Deployment endpoints, container IDs, rollback info</p></li>
+</ol>
+<p><strong>Best Practices:</strong></p>
+<ul class="simple">
+<li><p>Use <strong>standard fields</strong> for data that all pipelines need (model, train_data, metrics)</p></li>
+<li><p>Use <strong>extra_data</strong> for pipeline-specific or experimental data</p></li>
+<li><p>Use <strong>event.context</strong> for metadata that doesn’t belong in the payload (timestamps, versions)</p></li>
+</ul>
 </div>
 <div class="section" id="model-comparison">
 <h3>Model Comparison<a class="headerlink" href="#model-comparison" title="Permalink to this heading"></a></h3>
@@ -556,7 +670,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="mlflow_integration.html" class="btn btn-neutral float-right" title="MLflow Integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="data_passing.html" class="btn btn-neutral float-right" title="Data Passing Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

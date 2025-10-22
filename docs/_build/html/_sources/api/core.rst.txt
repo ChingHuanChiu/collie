@@ -154,12 +154,20 @@ Evaluator
 
    .. code-block:: python
 
+      from collie import Event
+      from collie.core import EvaluatorPayload
+      from collie.core.enums.ml_models import MLflowModelStage, ModelFlavor
+      
       class MyEvaluator(Evaluator):
-          def evaluate(self, context):
-              model = context.data["model"]
+          def handle(self, event: Event) -> Event:
+              model = event.payload.model
+              test_data = event.payload.test_data
+              X_test = test_data.drop("target", axis=1)
+              y_test = test_data["target"]
               
               # Evaluate on test set
-              metrics = calculate_metrics(model, test_data)
+              y_pred = model.predict(X_test)
+              metrics = calculate_metrics(y_test, y_pred)
               
               # Log all metrics
               self.mlflow.log_metrics({
@@ -170,16 +178,24 @@ Evaluator
               })
               
               # Create and log confusion matrix
-              plot_confusion_matrix(y_true, y_pred)
+              plot_confusion_matrix(y_test, y_pred)
               self.mlflow.log_artifact("confusion_matrix.png")
               
               # Compare with production model
-              prod_model = self.mlflow.load_model(
-                  model_name="my_model",
-                  stage="Production"
+              prod_model = self.load_latest_model(
+                  model_name=self.registered_model_name,
+                  stage=MLflowModelStage.PRODUCTION,
+                  flavor=ModelFlavor.SKLEARN
               )
               
-              return {"should_promote": should_promote}
+              should_promote = metrics["accuracy"] > 0.85
+              
+              return Event(
+                  payload=EvaluatorPayload(
+                      metrics=[metrics],
+                      is_better_than_production=should_promote
+                  )
+              )
 
 Pusher
 ~~~~~~
@@ -202,19 +218,29 @@ Pusher
 
    .. code-block:: python
 
+      from collie import Event
+      from collie.core import PusherPayload
+      
       class MyPusher(Pusher):
-          def push(self, context):
-              if not context.data.get("should_promote"):
-                  return {"status": "skipped"}
+          def handle(self, event: Event) -> Event:
+              if not event.payload.is_better_than_production:
+                  self.mlflow.log_param("deployment", "skipped")
+                  return Event(
+                      payload=PusherPayload(
+                          model_uri="",
+                          status="skipped",
+                          model_version=None
+                      )
+                  )
               
               # Get current run
               run_id = self.mlflow.active_run().info.run_id
               model_uri = f"runs:/{run_id}/model"
               
               # Register model
-              self.mlflow.register_model(
+              model_version = self.mlflow.register_model(
                   model_uri=model_uri,
-                  model_name="my_model"
+                  model_name=self.registered_model_name
               )
               
               # Tag as deployed
@@ -223,7 +249,13 @@ Pusher
                   "deployment_date": datetime.now().isoformat()
               })
               
-              return {"status": "success"}
+              return Event(
+                  payload=PusherPayload(
+                      model_uri=model_uri,
+                      status="deployed",
+                      model_version=str(model_version.version)
+                  )
+              )
 
 Orchestrator
 ~~~~~~~~~~~~

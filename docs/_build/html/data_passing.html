@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Passing Guide &mdash; Collie 0.1.0-beta documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MLflow Integration" href="mlflow_integration.html" />
+    <link rel="prev" title="Core Concepts" href="core_concepts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Collie
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data Passing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#understanding-data-flow-in-collie">Understanding Data Flow in Collie</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#user-friendly-features">User-Friendly Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#three-ways-to-pass-data">Three Ways to Pass Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#standard-payload-fields-recommended-for-common-data">1. Standard Payload Fields (Recommended for Common Data)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extra-data-field-for-custom-experimental-data">2. Extra Data Field (For Custom/Experimental Data)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#event-context-framework-internal-rarely-needed">3. Event Context (Framework Internal - Rarely Needed)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#decision-tree-which-method-to-use">Decision Tree: Which Method to Use?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-1-passing-data-through-the-pipeline">Pattern 1: Passing Data Through the Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-2-accumulating-extra-data">Pattern 2: Accumulating Extra Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-3-conditional-data-passing">Pattern 3: Conditional Data Passing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#do-s">DO’s ✅</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#don-ts">DON’Ts ❌</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#complete-example">Complete Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Collie</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Data Passing Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/data_passing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="data-passing-guide">
+<h1>Data Passing Guide<a class="headerlink" href="#data-passing-guide" title="Permalink to this heading"></a></h1>
+<div class="section" id="understanding-data-flow-in-collie">
+<h2>Understanding Data Flow in Collie<a class="headerlink" href="#understanding-data-flow-in-collie" title="Permalink to this heading"></a></h2>
+<p>Collie uses an event-driven architecture where components communicate through <strong>Event</strong> objects.
+Each Event contains a <strong>Payload</strong> with typed fields and an optional <strong>Context</strong> for metadata.</p>
+</div>
+<div class="section" id="user-friendly-features">
+<h2>User-Friendly Features<a class="headerlink" href="#user-friendly-features" title="Permalink to this heading"></a></h2>
+<p>Collie Payloads are designed with developer experience in mind:</p>
+<p>✅ <strong>Type Safety</strong>: Standard fields have clear types for IDE autocomplete</p>
+<p>✅ <strong>Flexibility</strong>: <code class="docutils literal notranslate"><span class="pre">extra_data</span></code> field for custom data without breaking changes</p>
+<p>✅ <strong>Helper Methods</strong>: Convenient methods for accessing extra data:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">payload.get_extra(&quot;key&quot;,</span> <span class="pre">default)</span></code> - Safe access with default</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">payload.set_extra(&quot;key&quot;,</span> <span class="pre">value)</span></code> - Fluent setter with chaining</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">payload.has_extra(&quot;key&quot;)</span></code> - Check existence</p></li>
+</ul>
+</div></blockquote>
+<p>✅ <strong>Method Chaining</strong>: Build payloads fluently:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="p">(</span><span class="n">TransformerPayload</span><span class="p">(</span><span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
+           <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+           <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;n_classes&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>✅ <strong>Pydantic Validation</strong>: Automatic validation and serialization</p>
+</div>
+<div class="section" id="three-ways-to-pass-data">
+<h2>Three Ways to Pass Data<a class="headerlink" href="#three-ways-to-pass-data" title="Permalink to this heading"></a></h2>
+<div class="section" id="standard-payload-fields-recommended-for-common-data">
+<h3>1. Standard Payload Fields (Recommended for Common Data)<a class="headerlink" href="#standard-payload-fields-recommended-for-common-data" title="Permalink to this heading"></a></h3>
+<p>Use the predefined fields in each Payload type for standard ML pipeline data:</p>
+<p><strong>TransformerPayload</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">TransformerPayload</span><span class="p">(</span>
+    <span class="n">train_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>      <span class="c1"># Training dataset</span>
+    <span class="n">validation_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>  <span class="c1"># Validation dataset</span>
+    <span class="n">test_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>         <span class="c1"># Test dataset</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>TunerPayload</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">TunerPayload</span><span class="p">(</span>
+    <span class="n">hyperparameters</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>          <span class="c1"># Best hyperparameters found</span>
+    <span class="n">train_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>       <span class="c1"># Pass along training data</span>
+    <span class="n">validation_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>  <span class="c1"># Pass along validation data</span>
+    <span class="n">test_data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>         <span class="c1"># Pass along test data</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>TrainerPayload</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">TrainerPayload</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">Any</span>  <span class="c1"># Trained model object</span>
+<span class="p">)</span>
+
+<span class="c1"># Optional: Use extra_data for framework-specific metrics</span>
+<span class="n">TrainerPayload</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;train_loss&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>  <span class="c1"># PyTorch/TensorFlow loss</span>
+        <span class="s2">&quot;val_loss&quot;</span><span class="p">:</span> <span class="mf">0.08</span><span class="p">,</span>
+        <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">100</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>EvaluatorPayload</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">EvaluatorPayload</span><span class="p">(</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span>            <span class="c1"># List of metric dictionaries</span>
+    <span class="n">is_better_than_production</span><span class="o">=</span><span class="nb">bool</span> <span class="c1"># Whether to promote model</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>PusherPayload</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">PusherPayload</span><span class="p">(</span>
+    <span class="n">model_uri</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>                 <span class="c1"># MLflow model URI</span>
+    <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>                    <span class="c1"># Deployment status</span>
+    <span class="n">model_version</span><span class="o">=</span><span class="nb">str</span>              <span class="c1"># Model version number</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="extra-data-field-for-custom-experimental-data">
+<h3>2. Extra Data Field (For Custom/Experimental Data)<a class="headerlink" href="#extra-data-field-for-custom-experimental-data" title="Permalink to this heading"></a></h3>
+<p>Every Payload has an <code class="docutils literal notranslate"><span class="pre">extra_data</span></code> dictionary field for flexible custom data.</p>
+<p><strong>Three Ways to Use Extra Data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Method 1: Direct dictionary access</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">TransformerPayload</span><span class="p">(</span>
+    <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+    <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">]}</span>
+<span class="p">)</span>
+
+<span class="c1"># Method 2: Using helper methods (recommended for better readability)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">TransformerPayload</span><span class="p">(</span><span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
+<span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">])</span>
+<span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;n_classes&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Method 3: Method chaining</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="p">(</span><span class="n">TransformerPayload</span><span class="p">(</span><span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
+           <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">])</span>
+           <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;n_classes&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+           <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;data_source&quot;</span><span class="p">,</span> <span class="s2">&quot;database&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><strong>Helper Methods:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set a value</span>
+<span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>  <span class="c1"># Returns self for chaining</span>
+
+<span class="c1"># Get a value with default</span>
+<span class="n">value</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">default_value</span><span class="p">)</span>
+
+<span class="c1"># Check if key exists</span>
+<span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">has_extra</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">):</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example: Passing Feature Engineering Metadata</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTransformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Process data</span>
+        <span class="n">train_data</span><span class="p">,</span> <span class="n">feature_info</span> <span class="o">=</span> <span class="n">preprocess_data</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">train_data</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">,</span> <span class="s2">&quot;score&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;categorical_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;gender&quot;</span><span class="p">,</span> <span class="s2">&quot;city&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;numeric_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;income&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;encoding_mappings&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;city&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;NY&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;LA&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
+                    <span class="s2">&quot;scaler_params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example: Accessing and Extending Extra Data</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Get data from previous component</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+
+        <span class="c1"># Access extra data using helper methods (recommended)</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">categorical_features</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;categorical_features&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="c1"># Or check if exists first</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">has_extra</span><span class="p">(</span><span class="s2">&quot;scaler_params&quot;</span><span class="p">):</span>
+            <span class="n">scaler_params</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;scaler_params&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Use the information</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+            <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_names</span><span class="p">),</span>
+            <span class="s2">&quot;n_categorical&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">categorical_features</span><span class="p">)</span>
+        <span class="p">})</span>
+
+        <span class="c1"># Train model</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">)</span>
+
+        <span class="c1"># Build new payload with extra data - three approaches:</span>
+
+        <span class="c1"># Approach 1: Create with dict (merge previous extra_data)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="p">,</span>  <span class="c1"># Keep previous</span>
+                    <span class="s2">&quot;training_time_seconds&quot;</span><span class="p">:</span> <span class="mf">120.5</span><span class="p">,</span>
+                    <span class="s2">&quot;n_epochs&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+                    <span class="s2">&quot;train_loss&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># Optional metrics</span>
+                    <span class="s2">&quot;val_loss&quot;</span><span class="p">:</span> <span class="mf">0.15</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Approach 2: Use helper methods (more readable)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">TrainerPayload</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">extra_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># Copy previous</span>
+        <span class="p">)</span>
+        <span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;training_time_seconds&quot;</span><span class="p">,</span> <span class="mf">120.5</span><span class="p">)</span>
+        <span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;n_epochs&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;train_loss&quot;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;val_loss&quot;</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+
+        <span class="c1"># Approach 3: Method chaining (most concise)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">(</span><span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                                 <span class="n">extra_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+                   <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;training_time_seconds&quot;</span><span class="p">,</span> <span class="mf">120.5</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;n_epochs&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;train_loss&quot;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;val_loss&quot;</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;early_stopping_epoch&quot;</span><span class="p">,</span> <span class="mi">35</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example: Evaluation with Custom Metrics</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">test_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">test_data</span>
+
+        <span class="c1"># Perform evaluation</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">evaluate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+
+        <span class="c1"># Save detailed reports</span>
+        <span class="n">report_path</span> <span class="o">=</span> <span class="s2">&quot;evaluation_report.html&quot;</span>
+        <span class="n">generate_report</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">report_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="n">report_path</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">EvaluatorPayload</span><span class="p">(</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">metrics</span><span class="p">],</span>
+                <span class="n">is_better_than_production</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.9</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;report_path&quot;</span><span class="p">:</span> <span class="n">report_path</span><span class="p">,</span>
+                    <span class="s2">&quot;confusion_matrix&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;confusion_matrix&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="s2">&quot;per_class_metrics&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;per_class&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;roc_auc_scores&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;roc_auc&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;evaluation_time&quot;</span><span class="p">:</span> <span class="s2">&quot;2024-01-15T10:30:00&quot;</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="event-context-framework-internal-rarely-needed">
+<h3>3. Event Context (Framework Internal - Rarely Needed)<a class="headerlink" href="#event-context-framework-internal-rarely-needed" title="Permalink to this heading"></a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Most users should NOT use event.context!</strong></p>
+<p>Context is primarily for framework internal use. Use <code class="docutils literal notranslate"><span class="pre">payload.extra_data</span></code> for custom data instead.</p>
+</div>
+<p><strong>When Context is Appropriate (Rare Cases):</strong></p>
+<p>Only use <code class="docutils literal notranslate"><span class="pre">event.context</span></code> for pipeline execution metadata that framework or monitoring tools need:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyComponent</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">time</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># Do work</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">process_data</span><span class="p">()</span>
+
+        <span class="c1"># ⚠️ Use context ONLY for execution metadata</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;processing_time&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;component_version&quot;</span><span class="p">,</span> <span class="s2">&quot;1.2.0&quot;</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hostname&quot;</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">())</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;execution_timestamp&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+
+        <span class="c1"># ✅ All business data goes in payload</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="n">features</span><span class="p">,</span>  <span class="c1"># ← Use extra_data, not context!</span>
+                    <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>❌ DON’T Use Context For:</strong></p>
+<ul class="simple">
+<li><p>Model objects</p></li>
+<li><p>Training data</p></li>
+<li><p>Feature names</p></li>
+<li><p>Hyperparameters</p></li>
+<li><p>Metrics</p></li>
+<li><p>Any business logic data</p></li>
+</ul>
+<p><strong>✅ DO Use Context For:</strong></p>
+<ul class="simple">
+<li><p>Execution timestamps</p></li>
+<li><p>Processing duration</p></li>
+<li><p>Component versions</p></li>
+<li><p>Debug flags</p></li>
+<li><p>Pipeline metadata</p></li>
+</ul>
+<p><strong>Better Alternative - Use extra_data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ Wrong - putting business data in context</span>
+<span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+
+<span class="c1"># ✅ Correct - use payload.extra_data</span>
+<span class="n">payload</span><span class="o">.</span><span class="n">set_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="decision-tree-which-method-to-use">
+<h2>Decision Tree: Which Method to Use?<a class="headerlink" href="#decision-tree-which-method-to-use" title="Permalink to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Is it core ML data (model, datasets, metrics)?
+├─ YES → Use standard Payload fields
+│         Example: train_data, model, metrics
+│
+└─ NO → Is it custom pipeline data?
+        ├─ YES → Use payload.extra_data (RECOMMENDED)
+        │         Example: feature_names, training_curves, custom_metrics
+        │
+        └─ NO → Is it framework/execution metadata?
+                └─ YES → Use event.context (RARELY NEEDED)
+                          Example: processing_time, execution_timestamp
+                          Note: Most users should use extra_data instead!
+</pre></div>
+</div>
+</div>
+<div class="section" id="common-patterns">
+<h2>Common Patterns<a class="headerlink" href="#common-patterns" title="Permalink to this heading"></a></h2>
+<div class="section" id="pattern-1-passing-data-through-the-pipeline">
+<h3>Pattern 1: Passing Data Through the Pipeline<a class="headerlink" href="#pattern-1-passing-data-through-the-pipeline" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Transformer creates data</span>
+<span class="n">TransformerPayload</span><span class="p">(</span>
+    <span class="n">train_data</span><span class="o">=</span><span class="n">train_df</span><span class="p">,</span>
+    <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="n">features</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Tuner passes it along with hyperparameters</span>
+<span class="n">TunerPayload</span><span class="p">(</span>
+    <span class="n">hyperparameters</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
+    <span class="n">train_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span><span class="p">,</span>  <span class="c1"># Pass through</span>
+    <span class="n">extra_data</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span>   <span class="c1"># Pass through</span>
+<span class="p">)</span>
+
+<span class="c1"># Trainer uses it</span>
+<span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+<span class="n">features</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="p">[</span><span class="s2">&quot;feature_names&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pattern-2-accumulating-extra-data">
+<h3>Pattern 2: Accumulating Extra Data<a class="headerlink" href="#pattern-2-accumulating-extra-data" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Each component adds to extra_data</span>
+<span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+    <span class="n">payload</span><span class="o">=</span><span class="n">SomePayload</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+            <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="p">,</span>  <span class="c1"># Keep previous data</span>
+            <span class="s2">&quot;my_new_field&quot;</span><span class="p">:</span> <span class="n">my_value</span>      <span class="c1"># Add new data</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pattern-3-conditional-data-passing">
+<h3>Pattern 3: Conditional Data Passing<a class="headerlink" href="#pattern-3-conditional-data-passing" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">extra_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Only include if debugging</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug_mode</span><span class="p">:</span>
+            <span class="n">extra_data</span><span class="p">[</span><span class="s2">&quot;training_curve&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">training_history</span>
+            <span class="n">extra_data</span><span class="p">[</span><span class="s2">&quot;gradient_norms&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gradient_norms</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="n">extra_data</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Permalink to this heading"></a></h2>
+<div class="section" id="do-s">
+<h3>DO’s ✅<a class="headerlink" href="#do-s" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Use standard fields</strong> for common ML data (datasets, models, metrics)</p></li>
+<li><p><strong>Use extra_data</strong> for custom, experimental, or pipeline-specific data</p></li>
+<li><p><strong>Use event.context</strong> only for processing metadata (timestamps, versions)</p></li>
+<li><p><strong>Document</strong> what you put in extra_data in your component docstrings</p></li>
+<li><p><strong>Provide defaults</strong> when accessing extra_data: <code class="docutils literal notranslate"><span class="pre">extra_data.get(&quot;key&quot;,</span> <span class="pre">default)</span></code></p></li>
+<li><p><strong>Keep extra_data serializable</strong> (use built-in types, not complex objects)</p></li>
+</ul>
+</div>
+<div class="section" id="don-ts">
+<h3>DON’Ts ❌<a class="headerlink" href="#don-ts" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Don’t</strong> put large objects in extra_data (use artifacts instead)</p></li>
+<li><p><strong>Don’t</strong> rely on undocumented extra_data fields from other components</p></li>
+<li><p><strong>Don’t</strong> use context for main business data (use payload instead)</p></li>
+<li><p><strong>Don’t</strong> modify event.payload.extra_data in place (create a new dict)</p></li>
+<li><p><strong>Don’t</strong> put model objects in extra_data (use standard model field)</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="complete-example">
+<h2>Complete Example<a class="headerlink" href="#complete-example" title="Permalink to this heading"></a></h2>
+<p>Here’s a complete pipeline showing all three data passing methods:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Transformer</span><span class="p">,</span> <span class="n">Trainer</span><span class="p">,</span> <span class="n">Evaluator</span><span class="p">,</span>
+    <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">TrainerPayload</span><span class="p">,</span> <span class="n">EvaluatorPayload</span>
+<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">class</span> <span class="nc">DataTransformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># Load and process data</span>
+        <span class="n">train_data</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">load_and_process</span><span class="p">()</span>
+
+        <span class="c1"># Context: processing metadata</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;transform_time&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;data_version&quot;</span><span class="p">,</span> <span class="s2">&quot;v2.0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TransformerPayload</span><span class="p">(</span>
+                <span class="c1"># Standard fields</span>
+                <span class="n">train_data</span><span class="o">=</span><span class="n">train_data</span><span class="p">,</span>
+                <span class="n">validation_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">test_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="c1"># Extra data: feature engineering info</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;encoding_maps&quot;</span><span class="p">:</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;encodings&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;outliers_removed&quot;</span><span class="p">:</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;outliers_count&quot;</span><span class="p">]</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span>
+        <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">ModelTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># Standard fields</span>
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+
+        <span class="c1"># Extra data</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="c1"># Context</span>
+        <span class="n">data_version</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data_version&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;data_version&quot;</span><span class="p">,</span> <span class="n">data_version</span><span class="p">)</span>
+
+        <span class="c1"># Train</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">history</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+
+        <span class="c1"># Context: training metadata</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;training_time&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
+                <span class="c1"># Standard field</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="c1"># Extra data: optional metrics and training details</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="o">**</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="p">,</span>  <span class="c1"># Keep previous</span>
+                    <span class="s2">&quot;train_loss&quot;</span><span class="p">:</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="s2">&quot;val_loss&quot;</span><span class="p">:</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;val_loss&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="s2">&quot;training_curve&quot;</span><span class="p">:</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;best_epoch&quot;</span><span class="p">:</span> <span class="n">history</span><span class="p">[</span><span class="s2">&quot;best_epoch&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;Adam&quot;</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span>
+        <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">ModelEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="c1"># Evaluate</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">EvaluatorPayload</span><span class="p">(</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">metrics</span><span class="p">],</span>
+                <span class="n">is_better_than_production</span><span class="o">=</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.9</span><span class="p">,</span>
+                <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;detailed_report&quot;</span><span class="p">:</span> <span class="s2">&quot;report.html&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;confusion_matrix&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;cm&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this heading"></a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 25%" />
+<col style="width: 35%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Use For</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Usage Frequency</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Standard Fields</strong></p></td>
+<td><p>Core ML data</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">train_data</span></code>, <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">metrics</span></code></p></td>
+<td><p>Always</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>extra_data</strong></p></td>
+<td><p>Custom/experimental data</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">feature_names</span></code>, <code class="docutils literal notranslate"><span class="pre">training_curves</span></code>, <code class="docutils literal notranslate"><span class="pre">custom_reports</span></code></p></td>
+<td><p>Common</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>event.context</strong></p></td>
+<td><p>Framework metadata only</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">processing_time</span></code>, <code class="docutils literal notranslate"><span class="pre">execution_timestamp</span></code></p></td>
+<td><p>Rarely (internal use)</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Quick Reference:</strong></p>
+<ul class="simple">
+<li><p>🟢 <strong>Use Standard Fields</strong>: For all core ML data (model, datasets, metrics)</p></li>
+<li><p>🟡 <strong>Use extra_data</strong>: For custom pipeline data (99% of custom needs)</p></li>
+<li><p>🔴 <strong>Avoid context</strong>: Only for framework/execution metadata (rarely needed)</p></li>
+</ul>
+<p>For more examples, see the <a class="reference internal" href="core_concepts.html"><span class="doc">Core Concepts</span></a> and <a class="reference internal" href="mlflow_integration.html"><span class="doc">MLflow Integration</span></a> pages.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core_concepts.html" class="btn btn-neutral float-left" title="Core Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mlflow_integration.html" class="btn btn-neutral float-right" title="MLflow Integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ChingHuanChiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

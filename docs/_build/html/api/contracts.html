@@ -47,6 +47,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../core_concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_passing.html">Data Passing Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mlflow_integration.html">MLflow Integration</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
@@ -164,9 +165,7 @@
          <span class="p">})</span>
 
          <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-             <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span>
-                 <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-             <span class="p">)</span>
+             <span class="n">payload</span><span class="o">=</span><span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
          <span class="p">)</span>
 
  <span class="k">class</span> <span class="nc">ModelEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>

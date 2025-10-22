@@ -72,6 +72,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_passing.html">Data Passing Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
@@ -173,11 +174,13 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
         <span class="c1"># Return Event with TransformerPayload</span>
         <span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">TransformerPayload</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-            <span class="n">feature_cols</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">),</span>
-            <span class="n">target_col</span><span class="o">=</span><span class="s2">&quot;target&quot;</span>
+            <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+            <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">),</span>
+                <span class="s2">&quot;target_col&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span>
+            <span class="p">}</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -190,12 +193,12 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
 <span class="k">class</span> <span class="nc">IrisTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="c1"># Get data from transformer</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">data</span>
-        <span class="n">feature_cols</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">feature_cols</span>
-        <span class="n">target_col</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">target_col</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">target_col</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;target_col&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">)</span>
 
         <span class="c1"># Prepare training data</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_cols</span><span class="p">]</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_names</span><span class="p">]</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">target_col</span><span class="p">]</span>
 
         <span class="c1"># Define hyperparameters</span>
@@ -217,13 +220,13 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;train_accuracy&quot;</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">)</span>
 
         <span class="c1"># Log feature importance</span>
-        <span class="n">importance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">feature_cols</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">))</span>
+        <span class="n">importance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">feature_names</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_dict</span><span class="p">(</span><span class="n">importance</span><span class="p">,</span> <span class="s2">&quot;feature_importance.json&quot;</span><span class="p">)</span>
 
         <span class="c1"># Return Event with TrainerPayload</span>
         <span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">TrainerPayload</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">TRAINING_DONE</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">TRAINING_DONE</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -291,17 +294,22 @@ http://localhost:5000
         <span class="p">)</span>
 
         <span class="n">payload</span> <span class="o">=</span> <span class="n">TransformerPayload</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-            <span class="n">feature_cols</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">),</span>
-            <span class="n">target_col</span><span class="o">=</span><span class="s2">&quot;target&quot;</span>
+            <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+            <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">),</span>
+                <span class="s2">&quot;target_col&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span>
+            <span class="p">}</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 
 <span class="k">class</span> <span class="nc">IrisTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">data</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">feature_cols</span><span class="p">]</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">target_col</span><span class="p">]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">target_col</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;target_col&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">)</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_names</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">target_col</span><span class="p">]</span>
 
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
@@ -312,11 +320,11 @@ http://localhost:5000
         <span class="n">train_accuracy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;train_accuracy&quot;</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">)</span>
 
-        <span class="n">importance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">feature_cols</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">))</span>
+        <span class="n">importance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">feature_names</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_dict</span><span class="p">(</span><span class="n">importance</span><span class="p">,</span> <span class="s2">&quot;feature_importance.json&quot;</span><span class="p">)</span>
 
         <span class="n">payload</span> <span class="o">=</span> <span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">TRAINING_DONE</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">TRAINING_DONE</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 
 <span class="c1"># Run the pipeline</span>
 <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span>

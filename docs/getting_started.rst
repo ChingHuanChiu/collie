@@ -80,11 +80,13 @@ The Transformer handles data preprocessing:
            # Return Event with TransformerPayload
            from collie import TransformerPayload, Event, EventType
            payload = TransformerPayload(
-               data=df,
-               feature_cols=list(data.feature_names),
-               target_col="target"
+               train_data=df,
+               extra_data={
+                   "feature_names": list(data.feature_names),
+                   "target_col": "target"
+               }
            )
-           return Event(type=EventType.DATA_READY, payload=payload, context=event.context)
+           return Event(type=EventType.DATA_READY, payload=payload)
 
 Step 2: Create a Trainer
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,12 +101,12 @@ The Trainer handles model training:
    class IrisTrainer(Trainer):
        def handle(self, event):
            # Get data from transformer
-           df = event.payload.data
-           feature_cols = event.payload.feature_cols
-           target_col = event.payload.target_col
+           df = event.payload.train_data
+           feature_names = event.payload.get_extra("feature_names", [])
+           target_col = event.payload.get_extra("target_col", "target")
            
            # Prepare training data
-           X = df[feature_cols]
+           X = df[feature_names]
            y = df[target_col]
            
            # Define hyperparameters
@@ -126,13 +128,13 @@ The Trainer handles model training:
            self.mlflow.log_metric("train_accuracy", train_accuracy)
            
            # Log feature importance
-           importance = dict(zip(feature_cols, model.feature_importances_))
+           importance = dict(zip(feature_names, model.feature_importances_))
            self.mlflow.log_dict(importance, "feature_importance.json")
            
            # Return Event with TrainerPayload
            from collie import TrainerPayload, Event, EventType
            payload = TrainerPayload(model=model)
-           return Event(type=EventType.TRAINING_DONE, payload=payload, context=event.context)
+           return Event(type=EventType.TRAINING_DONE, payload=payload)
 
 Step 3: Create an Orchestrator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -205,17 +207,22 @@ Here's the complete working example:
            )
            
            payload = TransformerPayload(
-               data=df,
-               feature_cols=list(data.feature_names),
-               target_col="target"
+               train_data=df,
+               extra_data={
+                   "feature_names": list(data.feature_names),
+                   "target_col": "target"
+               }
            )
-           return Event(type=EventType.DATA_READY, payload=payload, context=event.context)
+           return Event(type=EventType.DATA_READY, payload=payload)
 
    class IrisTrainer(Trainer):
        def handle(self, event):
-           df = event.payload.data
-           X = df[event.payload.feature_cols]
-           y = df[event.payload.target_col]
+           df = event.payload.train_data
+           feature_names = event.payload.get_extra("feature_names", [])
+           target_col = event.payload.get_extra("target_col", "target")
+           
+           X = df[feature_names]
+           y = df[target_col]
            
            params = {"n_estimators": 100, "max_depth": 10, "random_state": 42}
            self.mlflow.log_params(params)
@@ -226,11 +233,11 @@ Here's the complete working example:
            train_accuracy = model.score(X, y)
            self.mlflow.log_metric("train_accuracy", train_accuracy)
            
-           importance = dict(zip(event.payload.feature_cols, model.feature_importances_))
+           importance = dict(zip(feature_names, model.feature_importances_))
            self.mlflow.log_dict(importance, "feature_importance.json")
            
            payload = TrainerPayload(model=model)
-           return Event(type=EventType.TRAINING_DONE, payload=payload, context=event.context)
+           return Event(type=EventType.TRAINING_DONE, payload=payload)
 
    # Run the pipeline
    orchestrator = Orchestrator(

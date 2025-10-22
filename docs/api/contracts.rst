@@ -84,9 +84,7 @@ Complete Component with MLflow
            })
            
            return Event(
-               payload=TrainerPayload(
-                   model=model,
-               )
+               payload=TrainerPayload(model=model)
            )
 
    class ModelEvaluator(Evaluator):

@@ -57,7 +57,7 @@ class Pusher(EventHandler, MLFlowComponentABC):
             try:
                 pusher_event = self._handle(event)
                 payload = self._get_pusher_payload(pusher_event)
-                pass_evaluation = event.context.get("pass_evaluation")
+                pass_evaluation = event._context.get("pass_evaluation")
                 if pass_evaluation and self.target_stage:
                     version = self._get_version_to_transition()
                     self.transition_model_version(
@@ -70,7 +70,7 @@ class Pusher(EventHandler, MLFlowComponentABC):
                 return Event(
                     type=EventType.PUSHER_DONE,
                     payload=payload,
-                    context=event.context,
+                    _context=event._context,
                 )
 
             except Exception as e:

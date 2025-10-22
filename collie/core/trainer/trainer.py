@@ -57,12 +57,12 @@ class Trainer(EventHandler, MLFlowComponentABC):
                     model=model, 
                     name=TrainerArtifact().model
                 )
-                event.context.set("model_uri", self.artifact_uri(run))
+                event._context.set("model_uri", self.artifact_uri(run))
 
                 return Event(
                     type=event_type,
                     payload=trainer_payload,
-                    context=event.context
+                    _context=event._context
                 )
             except Exception as e:
                 raise TrainerError(f"Trainer failed with error: {e}") from e

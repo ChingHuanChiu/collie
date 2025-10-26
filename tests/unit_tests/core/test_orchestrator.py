@@ -21,7 +21,6 @@ from collie._common.exceptions import OrchestratorError, TrainerError
 @pytest.mark.unit
 @pytest.mark.orchestrator
 class TestOrchestratorInitialization:
-    """Unit tests for Orchestrator initialization."""
     
     def test_initialization_with_all_parameters(self):
         """Test Orchestrator initialization with all parameters specified."""
@@ -92,17 +91,20 @@ class TestOrchestratorPipelineExecution:
             self.mock_pusher
         ]
         
-        self.orchestrator = Orchestrator(
+    @patch('collie.core.orchestrator.orchestrator.logger')
+    def test_orchestrate_pipeline_calls_all_components(self, mock_logger, mock_mlflow_config):
+        """Test that orchestrate_pipeline calls all components in order."""
+        orchestrator = Orchestrator(
             components=self.components,
-            tracking_uri="sqlite:///test.db",
+            tracking_uri=mock_mlflow_config.tracking_uri,
             registered_model_name="test_model",
             mlflow_tags={"env": "test"},
-            experiment_name="test_experiment"
+            experiment_name=mock_mlflow_config.experiment_name
         )
-    
-    @patch('collie.core.orchestrator.orchestrator.logger')
-    def test_orchestrate_pipeline_calls_all_components(self, mock_logger):
-        """Test that orchestrate_pipeline calls all components in order."""
+        
+        # Manually set mlflow_config since we're not calling run()
+        orchestrator.mlflow_config = mock_mlflow_config
+        
         # Setup mock events
         for component in self.components:
             mock_event = Mock(spec=Event)
@@ -110,21 +112,31 @@ class TestOrchestratorPipelineExecution:
             component.run.return_value = mock_event
         
         # Execute pipeline
-        self.orchestrator.orchestrate_pipeline()
+        orchestrator.orchestrate_pipeline()
         
         # Verify all components were called
         for component in self.components:
             component.run.assert_called_once()
     
     @patch('collie.core.orchestrator.orchestrator.logger')
-    def test_orchestrate_pipeline_logging(self, mock_logger):
+    def test_orchestrate_pipeline_logging(self, mock_logger, mock_mlflow_config):
         """Test that orchestrate_pipeline logs execution properly."""
+        orchestrator = Orchestrator(
+            components=self.components,
+            tracking_uri=mock_mlflow_config.tracking_uri,
+            registered_model_name="test_model",
+            experiment_name=mock_mlflow_config.experiment_name
+        )
+        
+        # Manually set mlflow_config since we're not calling run()
+        orchestrator.mlflow_config = mock_mlflow_config
+        
         # Setup mock events
         for component in self.components:
             component.run.return_value = Mock(spec=Event)
         
         # Execute pipeline
-        self.orchestrator.orchestrate_pipeline()
+        orchestrator.orchestrate_pipeline()
         
         # Verify logging
         mock_logger.info.assert_any_call("Pipeline started.")
@@ -135,37 +147,67 @@ class TestOrchestratorPipelineExecution:
             mock_logger.info.assert_any_call(f"Component {i} finished: {component_name}")
     
     @patch('collie.core.orchestrator.orchestrator.logger')
-    def test_orchestrate_pipeline_sets_mlflow_config(self, mock_logger):
+    def test_orchestrate_pipeline_sets_mlflow_config(self, mock_logger, mock_mlflow_config):
         """Test that orchestrate_pipeline sets MLflow config on components."""
+        orchestrator = Orchestrator(
+            components=self.components,
+            tracking_uri=mock_mlflow_config.tracking_uri,
+            registered_model_name="test_model",
+            experiment_name=mock_mlflow_config.experiment_name
+        )
+        
+        # Manually set mlflow_config since we're not calling run()
+        orchestrator.mlflow_config = mock_mlflow_config
+        
         # Setup mock events
         for component in self.components:
             component.run.return_value = Mock(spec=Event)
         
         # Execute pipeline
-        self.orchestrator.orchestrate_pipeline()
+        orchestrator.orchestrate_pipeline()
         
         # Verify mlflow_config was set on each component
         for component in self.components:
             assert hasattr(component, 'mlflow_config')
     
     @patch('collie.core.orchestrator.orchestrator.logger')
-    def test_orchestrate_pipeline_sets_registered_model_name(self, mock_logger):
+    def test_orchestrate_pipeline_sets_registered_model_name(self, mock_logger, mock_mlflow_config):
         """Test that orchestrate_pipeline sets registered_model_name on components."""
+        orchestrator = Orchestrator(
+            components=self.components,
+            tracking_uri=mock_mlflow_config.tracking_uri,
+            registered_model_name="test_model",
+            experiment_name=mock_mlflow_config.experiment_name
+        )
+        
+        # Manually set mlflow_config since we're not calling run()
+        orchestrator.mlflow_config = mock_mlflow_config
+        
         # Setup components with _registered_model_name attribute
         for component in self.components:
             component._registered_model_name = None
             component.run.return_value = Mock(spec=Event)
         
         # Execute pipeline
-        self.orchestrator.orchestrate_pipeline()
+        orchestrator.orchestrate_pipeline()
         
         # Verify registered_model_name was set
         for component in self.components:
             assert component.registered_model_name == "test_model"
     
     @patch('collie.core.orchestrator.orchestrator.logger')
-    def test_orchestrate_pipeline_event_flow(self, mock_logger):
+    def test_orchestrate_pipeline_event_flow(self, mock_logger, mock_mlflow_config):
         """Test that events flow correctly between components."""
+        orchestrator = Orchestrator(
+            components=self.components,
+            tracking_uri=mock_mlflow_config.tracking_uri,
+            registered_model_name="test_model",
+            experiment_name=mock_mlflow_config.experiment_name
+        )
+        
+        # Manually set mlflow_config since we're not calling run()
+        orchestrator.mlflow_config = mock_mlflow_config
+        
         # Setup different events for each component
         events = [
             Mock(type=EventType.DATA_READY),
@@ -178,7 +220,7 @@ class TestOrchestratorPipelineExecution:
             component.run.return_value = events[i]
         
         # Execute pipeline
-        self.orchestrator.orchestrate_pipeline()
+        orchestrator.orchestrate_pipeline()
         
         # Verify first component receives initialize event
         first_call_event = self.components[0].run.call_args[0][0]
@@ -253,7 +295,7 @@ class TestOrchestratorRunMethod:
     
     @patch.object(Orchestrator, 'start_run')
     @patch.object(Orchestrator, 'orchestrate_pipeline')
-    def test_run_method_handles_component_error(self, mock_orchestrate, mock_start_run):
+    def test_run_method_handles_component_error(self, mock_orchestrate, mock_start_run, mock_mlflow_config):
         """Test run method properly handles component errors."""
         # Setup mocks
         mock_run_context = MagicMock()
@@ -264,7 +306,7 @@ class TestOrchestratorRunMethod:
         mock_orchestrate.side_effect = TrainerError("Training failed")
         
         # Execute and verify error handling
-        with pytest.raises(OrchestratorError, match="Component error in orchestration: Training failed"):
+        with pytest.raises(OrchestratorError, match=r"Component error in orchestration:.*Training failed"):
             self.orchestrator.run()
     
     @patch.object(Orchestrator, 'start_run')

@@ -1,4 +1,3 @@
-import functools
 import tempfile
 import threading
 from abc import ABC, abstractmethod

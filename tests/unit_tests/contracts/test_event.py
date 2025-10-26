@@ -18,7 +18,6 @@ from collie.core.models import TransformerPayload
 
 @pytest.mark.unit
 class TestPipelineContext:
-    """Unit tests for PipelineContext class."""
     
     def test_initialization_with_empty_data(self):
         """Test PipelineContext initialization with no data."""
@@ -170,7 +169,7 @@ class TestEvent:
 class ConcreteEventHandler(EventHandler):
     """Concrete implementation of EventHandler for testing purposes."""
     
-    def _handle(self, event: Event) -> Event:
+    def handle(self, event: Event) -> Event:
         """Implementation that returns the event unchanged."""
         return event
 

@@ -4,6 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-sphinx-blue.svg)](docs/_build/html/index.html)
+[![codecov](https://codecov.io/gh/ChingHuanChiu/collie/branch/main/graph/badge.svg)](https://codecov.io/gh/ChingHuanChiu/collie)
 
 A Lightweight MLOps Framework for Machine Learning Workflows
 
@@ -182,39 +183,25 @@ mlflow server \
 
 Collie supports multiple ML frameworks through its model flavor system:
 
-| Framework | Status | Model I/O | Artifact Tracking |
-|-----------|--------|-----------|-------------------|
-| **PyTorch** | ✅ | ✅ | ✅ |
-| **scikit-learn** | ✅ | ✅ | ✅ |
-| **XGBoost** | ✅ | ✅ | ✅ |
-| **LightGBM** | ✅ | ✅ | ✅ |
-| **Transformers** | ✅ | ✅ | ✅ |
+| Framework | 
+|-----------|
+| **PyTorch** | 
+| **scikit-learn** |
+| **XGBoost** | 
+| **LightGBM** |
+| **Transformers** |
 
-
-## Examples
-
-Check out the [examples directory](./example/mlp) for complete working examples:
-- [MLP Classification Pipeline](./example/mlp/mlp.ipynb) - End-to-end example with PyTorch
 
 ## Documentation
 
-📚 **Complete documentation is available!**
-
-- **[Getting Started Guide](docs/_build/html/getting_started.html)** - Your first Collie pipeline in 5 minutes
-- **[MLflow Integration Guide](docs/_build/html/mlflow_integration.html)** - Complete guide to all `self.mlflow` methods
-- **[Core Concepts](docs/_build/html/core_concepts.html)** - Understand Collie's architecture
-- **[API Reference](docs/_build/html/api/core.html)** - Complete API documentation
-- **[Quick Reference Card](docs/MLFLOW_QUICK_REFERENCE.md)** - Cheat sheet for MLflow methods
+ **Complete documentation is available!**
+[https://collie-mlops.readthedocs.io/en/latest/getting_started.html] Here We GO !
 
 ## Roadmap
 
-- [x] Complete Sphinx documentation with MLflow methods
-- [ ] CLI tool for project scaffolding
 - [ ] TensorFlow/Keras support
-- [ ] Distributed training support
 - [ ] Model monitoring and drift detection
 - [ ] Integration with Airflow/Kubeflow
-- [ ] Published documentation on Read the Docs
 
 ## License
 

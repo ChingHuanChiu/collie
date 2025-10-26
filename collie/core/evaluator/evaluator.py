@@ -73,12 +73,12 @@ class Evaluator(EventHandler, MLFlowComponentABC):
                 payload = self._get_evaluator_payload(evaluator_event)
 
                 self.metrics: List[Dict[str, Any]] = payload.metrics
-                self.model_uri = event._context.get('model_uri')
+                self.model_uri = event.context.get('model_uri')
         
                 self._log_metrics()
                 self._log_summary(payload)
 
-                event._context.set("evaluator_report_uri", self.artifact_uri(run))
+                event.context.set("evaluator_report_uri", self.artifact_uri(run))
 
                 self._transition_model_version(payload, event)
                
@@ -88,7 +88,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             return Event(
                 type=EventType.EVALUATION_DONE,
                 payload=payload,
-                _context=event._context,
+                context=event.context,
             )
 
     @staticmethod
@@ -114,7 +114,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
             )
             stage = self.target_stage
             archive = True
-            event._context.set("pass_evaluation", True)
+            event.context.set("pass_evaluation", True)
             self.mlflow.log_param("promotion_reason", "experiment_is_better")
             version = self._next_model_version()
             self.transition_model_version(
@@ -126,7 +126,7 @@ class Evaluator(EventHandler, MLFlowComponentABC):
         else:
             stage = MLflowModelStage.NONE
             archive = False
-            event._context.set("pass_evaluation", False)
+            event.context.set("pass_evaluation", False)
             self.mlflow.log_param("promotion_reason", "experiment_not_better")
 
     def _next_model_version(self) -> str:

@@ -56,7 +56,7 @@ class Tuner(EventHandler, MLFlowComponentABC):
                     dictionary=hyperparameters, 
                     artifact_file=TunerArtifact().hyperparameters
                 )
-                event._context.set(
+                event.context.set(
                     "hyperparameters_uri",
                     self.artifact_path(run)
                 )
@@ -66,7 +66,7 @@ class Tuner(EventHandler, MLFlowComponentABC):
                 return Event(
                     type=event_type,
                     payload=tuner_payload,
-                    _context=event._context
+                    context=event.context
                 )
             except Exception as e:
                 raise TunerError(f"Tuner failed with error: {e}") from e

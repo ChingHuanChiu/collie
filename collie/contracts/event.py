@@ -42,28 +42,9 @@ P = TypeVar("P")
 class Event(BaseModel):
     type: Optional[EventType] = None
     payload: P
-    _context: PipelineContext = Field(default_factory=PipelineContext, alias="context")
+    context: PipelineContext = Field(default_factory=PipelineContext)
 
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
-    
-    @property
-    def context(self) -> PipelineContext:
-        """
-        Access the pipeline context (for framework internal use).
-        
-        Warning:
-            Context should only be used for metadata (timestamps, versions, etc.).
-            Use payload for passing data between components.
-        
-        Returns:
-            PipelineContext instance
-        """
-        return self._context
-    
-    @context.setter
-    def context(self, value: PipelineContext):
-        """Set the context (for framework internal use)."""
-        self._context = value
 
 
 class EventHandler(ABC):

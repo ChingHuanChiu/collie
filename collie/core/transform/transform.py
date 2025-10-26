@@ -56,7 +56,7 @@ class Transformer(EventHandler, MLFlowComponentABC):
 
                     if data is not None:
                         source = self.artifact_uri(run, data_type)
-                        event._context.set(
+                        event.context.set(
                             f"{data_type}_uri",
                             source
                         )
@@ -70,7 +70,7 @@ class Transformer(EventHandler, MLFlowComponentABC):
                 return Event(
                     type=event_type,
                     payload=transformer_payload,
-                    _context=event._context
+                    context=event.context
                 )
 
             except Exception as e:

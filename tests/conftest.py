@@ -1,10 +1,3 @@
-"""
-Pytest configuration and shared fixtures for the collie test suite.
-
-This file contains pytest configuration, shared fixtures, and test utilities
-that are available to all test files in the project.
-"""
-
 import pytest
 import pandas as pd
 from unittest.mock import Mock, MagicMock
@@ -20,6 +13,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from collie.contracts.event import Event, EventType, PipelineContext
+from collie.contracts.mlflow import MLflowConfig
 from collie.core.models import (
     TransformerPayload,
     TrainerPayload,
@@ -27,12 +21,6 @@ from collie.core.models import (
     EvaluatorPayload,
     PusherPayload
 )
-
-# Import fixtures from fixtures modules
-pytest_plugins = [
-    "tests.fixtures.components",
-    "tests.fixtures.helpers",
-]
 
 
 # ===== PYTEST CONFIGURATION =====
@@ -103,6 +91,25 @@ def mock_mlflow_run():
 
 
 @pytest.fixture
+def mock_mlflow_config(tmp_path):
+    """Provide a mock MLflow configuration for testing."""
+    # Reset singleton for testing
+    MLflowConfig._instance = None
+    
+    tracking_uri = f"sqlite:///{tmp_path}/test_mlflow.db"
+    config = MLflowConfig(
+        tracking_uri=tracking_uri,
+        experiment_name="test_experiment"
+    )
+    config.configure()
+    
+    yield config
+    
+    # Reset singleton after test
+    MLflowConfig._instance = None
+
+
+@pytest.fixture
 def transformer_payload(sample_dataframe):
     """Provide a sample TransformerPayload."""
     return TransformerPayload(
@@ -167,8 +174,6 @@ def assert_event_valid():
     
     return _assert_event_valid
 
-
-# ===== SKIPIF CONDITIONS =====
 
 # Skip conditions for optional dependencies
 try:

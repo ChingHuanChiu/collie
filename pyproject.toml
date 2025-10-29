@@ -56,31 +56,6 @@ dependencies = [
     "sentence-transformers>=2.0.0",
 ]
 
-[project.optional-dependencies]
-# ML Framework support - install specific frameworks as needed
-sklearn = ["scikit-learn>=1.0.0"]
-xgboost = ["xgboost>=1.5.0"]
-pytorch = [
-    "torch>=1.9.0",
-    "pytorch-lightning>=2.0.0"
-]
-lightgbm = ["lightgbm>=3.0.0"]
-transformers = [
-    "transformers>=4.0.0",
-    "sentence-transformers>=2.0.0"
-]
-
-# All ML frameworks
-all = [
-    "scikit-learn>=1.0.0",
-    "xgboost>=1.5.0",
-    "torch>=1.9.0",
-    "pytorch-lightning>=2.0.0",
-    "lightgbm>=3.0.0",
-    "transformers>=4.0.0",
-    "sentence-transformers>=2.0.0"
-]
-
 [project.urls]
 Homepage = "https://github.com/ChingHuanChiu/collie"
 Documentation = "https://github.com/ChingHuanChiu/collie/blob/main/README.md"

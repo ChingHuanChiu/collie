@@ -41,12 +41,19 @@ classifiers = [
     "Typing :: Typed"
 ]
 
-# Core dependencies
+# Core dependencies - includes all ML frameworks
 dependencies = [
     "mlflow>=2.0.0",
     "pydantic>=2.0.0",
     "pandas>=1.3.0",
     "numpy>=1.20.0",
+    "scikit-learn>=1.0.0",
+    "xgboost>=1.5.0",
+    "torch>=1.9.0",
+    "pytorch-lightning>=2.0.0",
+    "lightgbm>=3.0.0",
+    "transformers>=4.0.0",
+    "sentence-transformers>=2.0.0",
 ]
 
 [project.optional-dependencies]

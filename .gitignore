@@ -1,7 +1,5 @@
-# macOS
 .DS_Store
-
-# Python
+develop/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -23,23 +21,19 @@ wheels/
 .installed.cfg
 *.egg
 
-# Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 
-# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Project specific
 test.ipynb
 *.db
 mlruns/
 
-# Temporary or local development
 example/*/mlflow.db
 example/*/mlruns/

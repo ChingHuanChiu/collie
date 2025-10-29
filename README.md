@@ -8,7 +8,6 @@
 
 A Lightweight MLOps Framework for Machine Learning Workflows
 
-📚 **[Full Documentation](docs/_build/html/index.html)** | 🚀 **[Getting Started](docs/_build/html/getting_started.html)** | 🔧 **[MLflow Integration Guide](docs/_build/html/mlflow_integration.html)** | 📖 **[API Reference](docs/_build/html/api/core.html)**
 
 ## Overview
 
@@ -57,52 +56,6 @@ pip install collie-mlops[all]
 - Python >= 3.10
 - MLflow tracking server (can be local or remote)
 
-### Basic Usage
-
-Here's a simple example of building an ML pipeline with Collie:
-
-```python
-from collie.core import (
-    Transformer, Trainer, Evaluator, Pusher, Orchestrator
-)
-from collie import Event
-
-# Define your components
-class MyTransformer(Transformer):
-    def handle(self, event) -> Event:
-        # Your data transformation logic
-        pass
-
-class MyTrainer(Trainer):
-    def handle(self, event) -> Event:
-        # Your model training logic
-        pass
-
-class MyEvaluator(Evaluator):
-    def handle(self, event) -> Event:
-        # Your model evaluation logic
-        pass
-
-class MyPusher(Pusher):
-    def handle(self, event) -> Event:
-        # Your model deployment logic
-        pass
-
-# Create and run the pipeline
-orchestrator = Orchestrator(
-    tracking_uri="http://localhost:5000",
-    components=[
-        MyTransformer(),
-        MyTrainer(),
-        MyEvaluator(),
-        MyPusher()
-    ],
-    experiment_name="MyExperiment",
-    registered_model_name="MyModel"
-)
-
-orchestrator.run()
-```
 
 ## Components
 
@@ -181,27 +134,25 @@ mlflow server \
 
 ## Supported Frameworks
 
-Collie supports multiple ML frameworks through its model flavor system:
+Collie supports multiple ML frameworks through its model flavor system currently:
 
-| Framework | 
-|-----------|
-| **PyTorch** | 
-| **scikit-learn** |
-| **XGBoost** | 
-| **LightGBM** |
-| **Transformers** |
+-  **PyTorch** 
+-  **scikit-learn**
+-  **XGBoost** 
+-  **LightGBM**
+-  **Transformers**
 
 
 ## Documentation
 
- **Complete documentation is available!**
-[https://collie-mlops.readthedocs.io/en/latest/getting_started.html] Here We GO !
+[Here you are]( https://collie-mlops.readthedocs.io/en/latest/getting_started.html )
 
 ## Roadmap
 
 - [ ] TensorFlow/Keras support
 - [ ] Model monitoring and drift detection
 - [ ] Integration with Airflow/Kubeflow
+- [ ] Automatically start the MLflow service
 
 ## License
 
@@ -219,10 +170,6 @@ If you use Collie in your research, please cite:
   url = {https://github.com/ChingHuanChiu/collie}
 }
 ```
-## Support
-
-For questions and support, please open an issue on the [GitHub repository](https://github.com/ChingHuanChiu/collie/issues).
-
 
 ---
 

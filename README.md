@@ -37,19 +37,15 @@ Collie follows an event-driven architecture with the following core components:
 ### Installation
 
 ```bash
-# Basic installation
 pip install collie-mlops
-
-# With specific ML framework support
-pip install collie-mlops[sklearn]
-pip install collie-mlops[pytorch]
-pip install collie-mlops[xgboost]
-pip install collie-mlops[lightgbm]
-pip install collie-mlops[transformers]
-
-# With all ML frameworks
-pip install collie-mlops[all]
 ```
+
+This will install Collie with all supported ML frameworks including:
+- scikit-learn
+- PyTorch
+- XGBoost
+- LightGBM
+- Transformers (with Sentence Transformers)
 
 ### Prerequisites
 

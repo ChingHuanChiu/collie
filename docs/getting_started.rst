@@ -19,15 +19,8 @@ Install Collie
 
    pip install collie-mlops
 
-For development with optional dependencies:
-
-.. code-block:: bash
-
-   # With PyTorch support
-   pip install collie-mlops[pytorch]
-
-   # With all ML frameworks
-   pip install collie-mlops[all]
+This will install Collie with all supported ML frameworks including scikit-learn, PyTorch, 
+XGBoost, LightGBM, and Transformers.
 
 Setting Up MLflow
 ~~~~~~~~~~~~~~~~~

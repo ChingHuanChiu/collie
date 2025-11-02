@@ -159,20 +159,22 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
         <span class="p">})</span>
 
         <span class="c1"># Log the input dataset</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_input_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_pd_data</span><span class="p">(</span>
             <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
             <span class="n">context</span><span class="o">=</span><span class="s2">&quot;training&quot;</span><span class="p">,</span>
             <span class="n">source</span><span class="o">=</span><span class="s2">&quot;sklearn.datasets.load_iris&quot;</span>
         <span class="p">)</span>
 
         <span class="c1"># Return Event with TransformerPayload</span>
-        <span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
+        <span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">Event</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">TransformerPayload</span><span class="p">(</span>
             <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
             <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">),</span>
                 <span class="s2">&quot;target_col&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span>
             <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </pre></div>
@@ -281,7 +283,7 @@ http://localhost:5000
             <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span>
         <span class="p">})</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_input_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_pd_data</span><span class="p">(</span>
             <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
             <span class="n">context</span><span class="o">=</span><span class="s2">&quot;training&quot;</span><span class="p">,</span>
             <span class="n">source</span><span class="o">=</span><span class="s2">&quot;sklearn.datasets.load_iris&quot;</span>

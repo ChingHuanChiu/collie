@@ -64,20 +64,22 @@ The Transformer handles data preprocessing:
            })
            
            # Log the input dataset
-           self.mlflow.log_input_data(
+           self.log_pd_data(
                data=df,
                context="training",
                source="sklearn.datasets.load_iris"
            )
            
            # Return Event with TransformerPayload
-           from collie import TransformerPayload, Event, EventType
+           from collie import TransformerPayload, Event
            payload = TransformerPayload(
                train_data=df,
                extra_data={
                    "feature_names": list(data.feature_names),
                    "target_col": "target"
                }
+           )
+           return Event(payload=payload)
            )
            return Event(type=EventType.DATA_READY, payload=payload)
 
@@ -193,7 +195,7 @@ Here's the complete working example:
                "n_features": len(data.feature_names)
            })
            
-           self.mlflow.log_input_data(
+           self.mlflow.log_pd_data(
                data=df,
                context="training",
                source="sklearn.datasets.load_iris"

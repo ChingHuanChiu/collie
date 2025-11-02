@@ -14,7 +14,7 @@ from collie.core.enums.ml_models import MLflowModelStage
 class Pusher(EventHandler, MLFlowComponentABC):
     def __init__(
         self,
-        target_stage: Optional[MLflowModelStage] = None,
+        target_stage: MLflowModelStage = MLflowModelStage.PRODUCTION,
         archive_existing_versions: bool = True,
         description: Optional[str] = None,
         tags: Optional[dict] = None
@@ -58,14 +58,31 @@ class Pusher(EventHandler, MLFlowComponentABC):
                 pusher_event = self._handle(event)
                 payload = self._get_pusher_payload(pusher_event)
                 pass_evaluation = event.context.get("pass_evaluation")
-                if pass_evaluation and self.target_stage:
-                    version = self._get_version_to_transition()
+                
+                if pass_evaluation:
+                    model_uri = event.context.get('model_uri')
+                    if not model_uri:
+                        raise PusherError("model_uri not found in event context")
+                    
+                    version = self.register_model(
+                        model_name=self.registered_model_name,
+                        model_uri=model_uri
+                    )
+                    self.mlflow.log_param("model_registered", "true")
+                    event.context.set("registered_version", str(version))
+                    self.mlflow.log_param("model_version", version)
+                    
+                    self.mlflow.log_param("target_stage", self.target_stage.value)
                     self.transition_model_version(
                         registered_model_name=self.registered_model_name,
-                        version=version,
+                        version=str(version),
                         desired_stage=self.target_stage,
                         archive_existing_versions_at_stage=self.archive_existing_versions,
                     )
+
+                else:
+                    self.mlflow.log_param("skip_reason", "evaluation_failed")
+                    self.mlflow.log_param("model_registered", "false")
 
                 return Event(
                     type=EventType.PUSHER_DONE,
@@ -75,24 +92,6 @@ class Pusher(EventHandler, MLFlowComponentABC):
 
             except Exception as e:
                 raise PusherError(f"Pusher failed with error: {e}")
-
-    def _get_version_to_transition(
-        self,
-        stages: MLflowModelStage = [
-            MLflowModelStage.STAGING, 
-            MLflowModelStage.PRODUCTION, 
-        ],
-    ) -> str:
-       
-        version = self.get_latest_version(
-            self.registered_model_name, 
-            stages=stages
-        )
-        if not version:
-            raise PusherError(
-                f"No model versions found in stages {stages} for model {self.registered_model_name}"
-            )
-        return version
 
     @type_checker((PusherPayload,), "PusherPayload must be of type PusherPayload.")
     def _get_pusher_payload(self, event: Event) -> PusherPayload:

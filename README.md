@@ -148,7 +148,7 @@ Collie supports multiple ML frameworks through its model flavor system currently
 - [ ] TensorFlow/Keras support
 - [ ] Model monitoring and drift detection
 - [ ] Integration with Airflow/Kubeflow
-- [ ] Automatically start the MLflow service
+- [ ] Integrate an LLM training/fine-tuning framework
 
 ## License
 

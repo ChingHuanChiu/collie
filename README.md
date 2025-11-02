@@ -1,4 +1,4 @@
-# Collie 🐕
+# Collie
 
 [![PyPI version](https://badge.fury.io/py/collie-mlops.svg)](https://badge.fury.io/py/collie-mlops)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -149,6 +149,7 @@ Collie supports multiple ML frameworks through its model flavor system currently
 - [ ] Model monitoring and drift detection
 - [ ] Integration with Airflow/Kubeflow
 - [ ] Integrate an LLM training/fine-tuning framework
+- [ ] Solve the issue about heavy import and installation.
 
 ## License
 

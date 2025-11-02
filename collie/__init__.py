@@ -19,7 +19,7 @@ For more examples, see: https://github.com/ChingHuanChiu/collie
 
 __author__ = "ChingHuanChiu"
 __email__ = "stevenchiou8@gmail.com"
-__version__ = "0.1.0-beta"
+__version__ = "0.1.0b0"
 
 # Import all main components for easy access
 from .contracts.event import Event, EventType, PipelineContext

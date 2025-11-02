@@ -53,7 +53,7 @@ class TestSklearnFlavorHandler:
         
         handler.log_model(mock_model, "model_path")
         
-        mock_log_model.assert_called_once_with(mock_model, "model_path")
+        mock_log_model.assert_called_once_with(sk_model=mock_model, artifact_path="model_path")
     
     @patch('collie._common.mlflow_model_io.model_flavors.SKLEARN_AVAILABLE', False)
     def test_sklearn_log_model_raises_when_unavailable(self):
@@ -124,8 +124,8 @@ class TestXGBoostFlavorHandler:
         handler.log_model(mock_model, "model_path", extra_param="value")
         
         mock_log_model.assert_called_once_with(
-            mock_model, 
-            "model_path", 
+            xgb_model=mock_model, 
+            artifact_path="model_path", 
             extra_param="value"
         )
 

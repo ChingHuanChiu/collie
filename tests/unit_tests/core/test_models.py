@@ -19,7 +19,7 @@ class TestBasePayload:
         """Test BasePayload can be initialized."""
         payload = BasePayload()
         
-        assert payload.extra_data == {}
+        assert payload.extra_data is None
     
     def test_base_payload_with_extra_data(self):
         """Test BasePayload initialization with extra_data."""
@@ -103,7 +103,7 @@ class TestTransformerPayload:
         assert payload.train_data is None
         assert payload.validation_data is None
         assert payload.test_data is None
-        assert payload.extra_data == {}
+        assert payload.extra_data is None
     
     def test_transformer_payload_with_train_data(self):
         """Test TransformerPayload with train_data."""
@@ -158,7 +158,7 @@ class TestTrainerPayload:
         payload = TrainerPayload()
         
         assert payload.model is None
-        assert payload.extra_data == {}
+        assert payload.extra_data is None
     
     def test_trainer_payload_with_model(self):
         """Test TrainerPayload with model object."""
@@ -195,7 +195,7 @@ class TestTunerPayload:
         """Test TunerPayload can be initialized."""
         payload = TunerPayload(hyperparameters={})
         
-        assert payload.extra_data == {}
+        assert payload.extra_data is None
         assert payload.hyperparameters == {}
     
     def test_tuner_payload_with_hyperparameters(self):

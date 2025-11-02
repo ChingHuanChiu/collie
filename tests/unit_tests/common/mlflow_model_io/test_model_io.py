@@ -44,8 +44,8 @@ class TestMLflowModelIO:
                 model_io.log_model(mock_model, "model_name")
                 
                 mock_handler.log_model.assert_called_once_with(
-                    mock_model,
-                    "model_name",
+                    model=mock_model,
+                    name="model_name",
                     registered_model_name=None
                 )
                 mock_log_param.assert_called_once()
@@ -73,8 +73,8 @@ class TestMLflowModelIO:
                 )
                 
                 mock_handler.log_model.assert_called_once_with(
-                    mock_model,
-                    "model_name",
+                    model=mock_model,
+                    name="model_name",
                     registered_model_name="my_registered_model"
                 )
     
@@ -102,8 +102,8 @@ class TestMLflowModelIO:
                 )
                 
                 mock_handler.log_model.assert_called_once_with(
-                    mock_model,
-                    "model_name",
+                    model=mock_model,
+                    name="model_name",
                     registered_model_name=None,
                     extra_param="value",
                     another_param=42

@@ -37,3 +37,4 @@ mlruns/
 
 example/*/mlflow.db
 example/*/mlruns/
+deployment_manual/*

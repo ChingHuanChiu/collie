@@ -67,7 +67,7 @@ class SklearnFlavorHandler(FlavorHandler):
                 flavor="sklearn"
             )
         try:
-            mlflow.sklearn.log_model(model, name, **kwargs)
+            mlflow.sklearn.log_model(sk_model=model, artifact_path=name, **kwargs)
         except Exception as e:
             raise ModelFlavorError(
                 f"Failed to log sklearn model: {str(e)}",
@@ -109,7 +109,7 @@ class XGBoostFlavorHandler(FlavorHandler):
                 flavor="xgboost"
             )
         try:
-            mlflow.xgboost.log_model(model, name, **kwargs)
+            mlflow.xgboost.log_model(xgb_model=model, artifact_path=name, **kwargs)
         except Exception as e:
             raise ModelFlavorError(
                 f"Failed to log XGBoost model: {str(e)}",
@@ -151,7 +151,7 @@ class PyTorchFlavorHandler(FlavorHandler):
                 flavor="pytorch"
             )
         try:
-            mlflow.pytorch.log_model(model, name, **kwargs)
+            mlflow.pytorch.log_model(pytorch_model=model, artifact_path=name, **kwargs)
         except Exception as e:
             raise ModelFlavorError(
                 f"Failed to log PyTorch model: {str(e)}",
@@ -193,7 +193,7 @@ class LightGBMFlavorHandler(FlavorHandler):
                 flavor="lightgbm"
             )
         try:
-            mlflow.lightgbm.log_model(model, name, **kwargs)
+            mlflow.lightgbm.log_model(lgb_model=model, artifact_path=name, **kwargs)
         except Exception as e:
             raise ModelFlavorError(
                 f"Failed to log LightGBM model: {str(e)}",
@@ -235,7 +235,7 @@ class TransformersFlavorHandler(FlavorHandler):
                 flavor="transformers"
             )
         try:
-            mlflow.transformers.log_model(model, name, **kwargs)
+            mlflow.transformers.log_model(transformers_model=model, artifact_path=name, **kwargs)
         except Exception as e:
             raise ModelFlavorError(
                 f"Failed to log Transformers model: {str(e)}",

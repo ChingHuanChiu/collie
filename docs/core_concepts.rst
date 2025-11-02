@@ -62,8 +62,8 @@ Transformer
            # Load data
            df = pd.read_csv("data.csv")
            
-           # Log input data
-           self.mlflow.log_input_data(
+           # Log pandas DataFrame
+           self.mlflow.log_pd_data(
                data=df,
                context="training",
                source="data.csv"
@@ -184,42 +184,59 @@ Tuner
 Evaluator
 ~~~~~~~~~
 
-**Purpose:** Model evaluation
+**Purpose:** Model evaluation and comparison
 
 **Responsibilities:**
-- Evaluate model performance
-- Compare with baseline/production models
-- Generate evaluation reports
-- Decide if model should be deployed
+- Evaluate model performance on test/validation data
+- Compare experiment model with production model
+- Calculate and log evaluation metrics
+- Determine if the new model is better (set pass_evaluation flag)
+- Generate evaluation reports and visualizations
+
+**Does NOT do:**
+- Register models to MLflow (handled by Pusher)
+- Transition model stages (handled by Pusher)
 
 **MLflow Usage:**
-- Log evaluation metrics
-- Log evaluation plots
+- Log evaluation metrics (accuracy, precision, recall, etc.)
+- Log evaluation parameters and decisions
+- Log evaluation artifacts (confusion matrix, ROC curves, reports)
 - Load production model for comparison
+
+**Outputs:**
+- Sets ``pass_evaluation`` in event.context (True if model is better, False otherwise)
+- Returns ``EvaluatorPayload`` with metrics and comparison results
 
 **Example:**
 
 .. code-block:: python
 
-   from collie import Event
+   from collie import Evaluator, Event
    from collie.core import EvaluatorPayload
    from collie.core.enums.ml_models import MLflowModelStage, ModelFlavor
+   from sklearn.metrics import accuracy_score
    
    class MyEvaluator(Evaluator):
+       def __init__(self):
+           super().__init__(
+               description="Model evaluation",
+               tags={"team": "data-science"}
+           )
+       
        def handle(self, event: Event) -> Event:
            model = event.payload.model
            test_data = event.payload.test_data
            X_test = test_data.drop("target", axis=1)
            y_test = test_data["target"]
            
-           # Evaluate
+           # Evaluate experiment model
            y_pred = model.predict(X_test)
            experiment_accuracy = accuracy_score(y_test, y_pred)
            
            # Log metrics
            self.mlflow.log_metric("experiment_accuracy", experiment_accuracy)
            
-           # Compare with production
+           # Compare with production model
            prod_model = self.load_latest_model(
                model_name=self.registered_model_name,
                stage=MLflowModelStage.PRODUCTION,
@@ -227,17 +244,20 @@ Evaluator
            )
            
            if prod_model is not None:
-               production_accuracy = prod_model.score(X_test, y_test)
+               y_pred_prod = prod_model.predict(X_test)
+               production_accuracy = accuracy_score(y_test, y_pred_prod)
                is_better = experiment_accuracy > production_accuracy
            else:
                production_accuracy = 0
-               is_better = True
+               is_better = True  # No production model, so experiment is better
            
-           self.mlflow.log_param(
-               "promotion_decision",
-               "promote" if is_better else "keep_current"
-           )
+           # Log comparison results
+           self.mlflow.log_metric("production_accuracy", production_accuracy)
+           self.mlflow.log_metric("accuracy_improvement", 
+                                 experiment_accuracy - production_accuracy)
            
+           # Return evaluation results
+           # Pusher will check pass_evaluation and register model if True
            return Event(
                payload=EvaluatorPayload(
                    metrics=[
@@ -254,60 +274,133 @@ Evaluator
 Pusher
 ~~~~~~
 
-**Purpose:** Model deployment to production environments
+**Purpose:** Model registration and deployment
 
 **Responsibilities:**
-- Deploy models to external services (APIs, Elasticsearch, etc.)
-- Transition model stages in MLflow
-- Handle deployment configurations
+- Check evaluation results (``pass_evaluation`` flag from Evaluator)
+- Register model to MLflow if evaluation passed
+- Transition model to target stage (e.g., Staging, Production)
+- Archive old versions at target stage (optional)
 - Log deployment metadata
+- (Optional) Deploy to external services
+
+**Automatic Behavior:**
+When ``pass_evaluation`` is True, Pusher automatically:
+
+1. Registers the model to MLflow Model Registry
+2. Transitions model to the specified ``target_stage``
+3. Archives existing models at that stage (if ``archive_existing_versions=True``)
 
 **MLflow Usage:**
-- Transition model stages (Staging → Production)
-- Log deployment parameters and tags
+- ``mlflow.register_model()`` - Register model to Model Registry
+- ``transition_model_version()`` - Move model to Production/Staging
+- Log deployment parameters and status
 
-**Example: Deploy to External Service**
+**Configuration:**
 
 .. code-block:: python
 
-   from collie import Event, Pusher
+   from collie import Pusher
+   from collie.core.enums.ml_models import MLflowModelStage
+   
+   # Configure Pusher with target stage
+   pusher = Pusher(
+       target_stage=MLflowModelStage.PRODUCTION,  # Deploy to Production
+       archive_existing_versions=True,             # Archive old Production models
+       description="Production deployment",
+       tags={"env": "production"}
+   )
+
+**Example 1: Basic MLflow Deployment (Recommended)**
+
+.. code-block:: python
+
+   from collie import Pusher, Event
    from collie.core import PusherPayload
+   from collie.core.enums.ml_models import MLflowModelStage
+   
+   class MyPusher(Pusher):
+       def __init__(self):
+           super().__init__(
+               target_stage=MLflowModelStage.PRODUCTION,
+               archive_existing_versions=True,
+               description="Deploy to Production"
+           )
+       
+       def handle(self, event: Event) -> Event:
+           # Pusher automatically handles:
+           # - Model registration
+           # - Stage transition
+           # - Old version archival
+           
+           # You can add custom logic here if needed
+           # e.g., send notifications, update database
+           
+           return Event(
+               payload=PusherPayload(
+                   model_uri=event.context.get('model_uri'),
+                   status="deployed"
+               )
+           )
+
+**Example 2: Deploy to External Service (Advanced)**
+
+.. code-block:: python
+
+   from collie import Pusher, Event
+   from collie.core import PusherPayload
+   from collie.core.enums.ml_models import MLflowModelStage
    import requests
    
-   class ModelDeploymentPusher(Pusher):
+   class ExternalDeploymentPusher(Pusher):
+       def __init__(self):
+           super().__init__(
+               target_stage=MLflowModelStage.PRODUCTION,
+               archive_existing_versions=True
+           )
+       
        def handle(self, event: Event) -> Event:
-           # Get model from payload
-           model = event.payload.model
+           # First, Pusher registers model to MLflow automatically
+           # Then you can add custom deployment logic
            
-           # Example: Deploy to Elasticsearch or REST API
-           deployment_endpoint = "https://your-ml-engine.com/api/models"
+           model_version = event.context.get('registered_version')
+           model_name = self.registered_model_name
+           
+           # Deploy to external service
+           deployment_endpoint = "https://your-api.com/models"
            
            try:
-               # Serialize and post model
                response = requests.post(
                    deployment_endpoint,
                    json={
-                       "model_name": "iris_classifier",
-                       "model_data": serialize_model(model),
-                       "metadata": event.payload.get_extra("model_metadata", {})
+                       "model_name": model_name,
+                       "model_version": model_version,
+                       "mlflow_uri": event.context.get('model_uri')
                    }
                )
                
                # Log deployment info
                self.mlflow.log_params({
+                   "external_deployment": "success",
                    "deployment_endpoint": deployment_endpoint,
-                   "deployment_status": response.status_code
+                   "deployment_id": response.json().get('id')
                })
                
                return Event(
                    payload=PusherPayload(
-                       model_uri=f"external://{response.json()['model_id']}",
+                       model_uri=event.context.get('model_uri'),
                        status="deployed",
-                       model_version="1.0",
-                       extra_data={
-                           "deployment_id": response.json()['model_id'],
-                           "endpoint": deployment_endpoint
-                       }
+                       model_version=str(model_version)
+                   )
+               )
+           except Exception as e:
+               self.mlflow.log_param("deployment_error", str(e))
+               return Event(
+                   payload=PusherPayload(
+                       model_uri=event.context.get('model_uri'),
+                       status="failed"
+                   )
+               )
                    )
                )
            except Exception as e:

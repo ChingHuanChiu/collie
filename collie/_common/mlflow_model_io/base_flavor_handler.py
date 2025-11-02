@@ -16,7 +16,7 @@ class FlavorHandler(ABC):
     def log_model(
         self, 
         model: Any, 
-        artifact_path: str, 
+        name: str, 
         **kwargs: Any
     ) -> None:
         raise NotImplementedError

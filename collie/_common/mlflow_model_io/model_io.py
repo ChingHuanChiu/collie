@@ -45,8 +45,8 @@ class MLflowModelIO:
             raise ValueError(f"Unsupported model type: {type(model)}")
 
         handler.log_model(
-            model, 
-            name, 
+            model=model, 
+            name=name, 
             registered_model_name=registered_model_name, 
             **kwargs
         )

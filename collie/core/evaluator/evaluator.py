@@ -17,14 +17,11 @@ from collie.core.models import (
     EvaluatorPayload
 )
 from collie._common.exceptions import EvaluatorError
-from collie.core.enums.ml_models import MLflowModelStage
-
 
 class Evaluator(EventHandler, MLFlowComponentABC):
     
     def __init__(
         self, 
-        target_stage: MLflowModelStage = MLflowModelStage.STAGING,
         description: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None
     ) -> None:
@@ -33,15 +30,12 @@ class Evaluator(EventHandler, MLFlowComponentABC):
         Initializes the Evaluator.
 
         Args:
-            target_stage (MLflowModelStage, optional): The stage to transition the model to after evaluation. 
-                                                       Defaults to MLflowModelStage.STAGING.
             description (Optional[str], optional): Description for the MLflow run. Defaults to None.
             tags (Optional[Dict[str, str]], optional): Tags to associate with the MLflow run. Defaults to None.
 
         """
         super().__init__()
         self._registered_model_name = None
-        self.target_stage = target_stage
         self.description = description
         self.tags = tags or {"component": "Evaluator"}
 
@@ -80,7 +74,12 @@ class Evaluator(EventHandler, MLFlowComponentABC):
 
                 event.context.set("evaluator_report_uri", self.artifact_uri(run))
 
-                self._transition_model_version(payload, event)
+                if self.experiment_is_better(payload):
+                    event.context.set("pass_evaluation", True)
+                    self.mlflow.log_param("evaluation_result", "passed")
+                else:
+                    event.context.set("pass_evaluation", False)
+                    self.mlflow.log_param("evaluation_result", "failed")
                
             except Exception as e:
                 raise EvaluatorError(f"Evaluator failed: {e}") from e
@@ -99,52 +98,6 @@ class Evaluator(EventHandler, MLFlowComponentABC):
         Decide if experiment model is better based on score direction.
         """
         return payload.is_better_than_production
-
-    def _transition_model_version(
-        self,
-        payload: EvaluatorPayload,
-        event: Event
-    ) -> None:
-     
-
-        if self.experiment_is_better(payload):
-            self.register_model(
-                model_name=self.registered_model_name, 
-                model_uri=self.model_uri
-            )
-            stage = self.target_stage
-            archive = True
-            event.context.set("pass_evaluation", True)
-            self.mlflow.log_param("promotion_reason", "experiment_is_better")
-            version = self._next_model_version()
-            self.transition_model_version(
-                registered_model_name=self.registered_model_name,
-                version=version,
-                desired_stage=stage,
-                archive_existing_versions_at_stage=archive,
-            )
-        else:
-            stage = MLflowModelStage.NONE
-            archive = False
-            event.context.set("pass_evaluation", False)
-            self.mlflow.log_param("promotion_reason", "experiment_not_better")
-
-    def _next_model_version(self) -> str:
-        """
-        Compute next version number for the registered model.
-        Model versions should be globally incremental, not stage-specific.
-        """
-       
-        latest_version = self.get_latest_version(
-            self.registered_model_name, 
-            stages=[
-                MLflowModelStage.STAGING,
-                MLflowModelStage.PRODUCTION
-            ]
-        )
-        if not latest_version:
-            return "1"
-        return str(int(latest_version) + 1)
     
     def _flatten_metrics(
         self,

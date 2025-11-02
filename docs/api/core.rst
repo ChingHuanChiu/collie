@@ -20,7 +20,7 @@ Transformer
    **MLflow Methods Available:**
 
    * ``self.mlflow.log_param()`` - Log transformation parameters
-   * ``self.mlflow.log_input_data()`` - Log input datasets
+   * ``self.mlflow.log_pd_data()`` - Log pandas DataFrame datasets
    * ``self.mlflow.log_artifact()`` - Log transformation artifacts
    * ``self.mlflow.log_dict()`` - Log transformation statistics
 
@@ -39,10 +39,11 @@ Transformer
               # Process data
               transformed_data = preprocess(data)
               
-              # Log input data
-              self.mlflow.log_input_data(
+              # Log pandas DataFrame
+              self.mlflow.log_pd_data(
                   data=transformed_data,
-                  context="training"
+                  context="training",
+                  source="preprocessing"
               )
               
               return {"data": transformed_data}
@@ -141,13 +142,14 @@ Evaluator
    :show-inheritance:
    :inherited-members:
 
-   The Evaluator component evaluates model performance.
+   The Evaluator component evaluates model performance and determines if the model
+   passes the evaluation criteria. It does NOT register models or transition stages.
 
    **MLflow Methods Available:**
 
    * ``self.mlflow.log_metrics()`` - Log evaluation metrics
-   * ``self.mlflow.log_artifact()`` - Log evaluation plots
-   * ``self.mlflow.log_dict()`` - Log detailed results
+   * ``self.mlflow.log_artifact()`` - Log evaluation plots and reports
+   * ``self.mlflow.log_dict()`` - Log detailed evaluation results
    * ``self.mlflow.load_model()`` - Load models for comparison
 
    **Example:**
@@ -167,35 +169,41 @@ Evaluator
               
               # Evaluate on test set
               y_pred = model.predict(X_test)
-              metrics = calculate_metrics(y_test, y_pred)
+              accuracy = calculate_accuracy(y_test, y_pred)
               
-              # Log all metrics
+              # Log evaluation metrics
               self.mlflow.log_metrics({
-                  "accuracy": metrics["accuracy"],
-                  "precision": metrics["precision"],
-                  "recall": metrics["recall"],
-                  "f1_score": metrics["f1"]
+                  "test_accuracy": accuracy,
+                  "test_samples": len(y_test)
               })
               
-              # Create and log confusion matrix
-              plot_confusion_matrix(y_test, y_pred)
+              # Create and log confusion matrix plot
+              plot_confusion_matrix(y_test, y_pred, "confusion_matrix.png")
               self.mlflow.log_artifact("confusion_matrix.png")
               
-              # Compare with production model
-              prod_model = self.load_latest_model(
-                  model_name=self.registered_model_name,
-                  stage=MLflowModelStage.PRODUCTION,
-                  flavor=ModelFlavor.SKLEARN
-              )
-              
-              should_promote = metrics["accuracy"] > 0.85
-              
-              return Event(
-                  payload=EvaluatorPayload(
-                      metrics=[metrics],
-                      is_better_than_production=should_promote
+              # Optional: Compare with production model
+              try:
+                  prod_model = self.load_latest_model(
+                      model_name=self.registered_model_name,
+                      stage=MLflowModelStage.PRODUCTION,
+                      flavor=ModelFlavor.SKLEARN
                   )
+                  prod_pred = prod_model.predict(X_test)
+                  prod_accuracy = calculate_accuracy(y_test, prod_pred)
+                  
+                  self.mlflow.log_metric("prod_accuracy", prod_accuracy)
+                  is_better = accuracy > prod_accuracy
+              except Exception:
+                  # No production model exists yet
+                  is_better = accuracy > 0.85  # Use threshold
+              
+              # Return evaluation results
+              # The Pusher component will handle model registration
+              payload = EvaluatorPayload(
+                  metrics={"accuracy": accuracy},
+                  pass_evaluation=is_better  # This flag tells Pusher to proceed
               )
+              return Event(payload=payload)
 
 Pusher
 ~~~~~~
@@ -206,12 +214,21 @@ Pusher
    :show-inheritance:
    :inherited-members:
 
-   The Pusher component handles model deployment and registration.
+   The Pusher component handles model registration to MLflow Model Registry and 
+   stage transitions. It automatically registers models and transitions them to 
+   the configured target stage (e.g., Staging, Production).
+
+   **Configuration:**
+
+   * ``registered_model_name`` - The name for the model in MLflow Registry
+   * ``target_stage`` - The MLflow stage to transition to (default: STAGING)
 
    **MLflow Methods Available:**
 
    * ``self.mlflow.register_model()`` - Register model to registry
-   * ``self.mlflow.set_tag()`` - Tag the deployed model
+   * ``self.mlflow.transition_model_version_stage()`` - Transition model stage
+   * ``self.mlflow.set_registered_model_tag()`` - Tag the registered model
+   * ``self.mlflow.set_model_version_tag()`` - Tag specific model version
    * ``self.mlflow.log_param()`` - Log deployment parameters
 
    **Example:**
@@ -220,34 +237,41 @@ Pusher
 
       from collie import Event
       from collie.core import PusherPayload
+      from collie.core.enums.ml_models import MLflowModelStage
+      
+      # Configure Pusher with target stage
+      pusher = MyPusher(
+          registered_model_name="my_model",
+          target_stage=MLflowModelStage.PRODUCTION  # Auto-promote to Production
+      )
       
       class MyPusher(Pusher):
           def handle(self, event: Event) -> Event:
-              if not event.payload.is_better_than_production:
-                  self.mlflow.log_param("deployment", "skipped")
-                  return Event(
-                      payload=PusherPayload(
-                          model_uri="",
-                          status="skipped",
-                          model_version=None
-                      )
+              # Check if evaluation passed
+              if not event.payload.pass_evaluation:
+                  self.mlflow.log_param("registration_status", "skipped")
+                  payload = PusherPayload(
+                      model_uri="",
+                      registered=False
                   )
+                  return Event(payload=payload)
               
-              # Get current run
-              run_id = self.mlflow.active_run().info.run_id
-              model_uri = f"runs:/{run_id}/model"
+              # Model registration and stage transition is automatic
+              # The base Pusher class handles:
+              # 1. Registering the model
+              # 2. Transitioning to target_stage
+              # 3. Setting appropriate tags
               
-              # Register model
-              model_version = self.mlflow.register_model(
-                  model_uri=model_uri,
-                  model_name=self.registered_model_name
+              # You can add custom logic here
+              self.mlflow.log_param("registration_status", "success")
+              
+              # The model is already registered by base class
+              # Return success payload
+              payload = PusherPayload(
+                  model_uri=f"models:/{self.registered_model_name}/{self.target_stage}",
+                  registered=True
               )
-              
-              # Tag as deployed
-              self.mlflow.set_tags({
-                  "deployed": "true",
-                  "deployment_date": datetime.now().isoformat()
-              })
+              return Event(payload=payload)
               
               return Event(
                   payload=PusherPayload(

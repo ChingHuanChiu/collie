@@ -10,9 +10,11 @@ import pandas as pd
 
 
 class BasePayload(BaseModel):
-    """Base class for all payload types with common extra_data functionality."""
+    """Base class for all payload types with optional extra_data functionality."""
     
-    extra_data: Dict[str, Any] = Field(default_factory=dict)
+    extra_data: Optional[Dict[str, Any]] = None
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     
     def set_extra(self, key: str, value: Any):
         """
@@ -29,6 +31,8 @@ class BasePayload(BaseModel):
             >>> payload.set_extra("feature_names", ["age", "income"])
             >>> payload.set_extra("n_classes", 3).set_extra("version", "1.0")
         """
+        if self.extra_data is None:
+            self.extra_data = {}
         self.extra_data[key] = value
         return self
     
@@ -46,6 +50,8 @@ class BasePayload(BaseModel):
         Example:
             >>> features = payload.get_extra("feature_names", [])
         """
+        if self.extra_data is None:
+            return default
         return self.extra_data.get(key, default)
     
     def has_extra(self, key: str) -> bool:
@@ -62,6 +68,8 @@ class BasePayload(BaseModel):
             >>> if payload.has_extra("feature_names"):
             ...     features = payload.get_extra("feature_names")
         """
+        if self.extra_data is None:
+            return False
         return key in self.extra_data
 
 

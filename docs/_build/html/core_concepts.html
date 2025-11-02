@@ -154,8 +154,8 @@
         <span class="c1"># Load data</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;data.csv&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Log input data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_input_data</span><span class="p">(</span>
+        <span class="c1"># Log pandas DataFrame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_pd_data</span><span class="p">(</span>
             <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
             <span class="n">context</span><span class="o">=</span><span class="s2">&quot;training&quot;</span><span class="p">,</span>
             <span class="n">source</span><span class="o">=</span><span class="s2">&quot;data.csv&quot;</span>
@@ -267,36 +267,51 @@
 </div>
 <div class="section" id="evaluator">
 <h3>Evaluator<a class="headerlink" href="#evaluator" title="Permalink to this heading"></a></h3>
-<p><strong>Purpose:</strong> Model evaluation</p>
+<p><strong>Purpose:</strong> Model evaluation and comparison</p>
 <p><strong>Responsibilities:</strong>
-- Evaluate model performance
-- Compare with baseline/production models
-- Generate evaluation reports
-- Decide if model should be deployed</p>
+- Evaluate model performance on test/validation data
+- Compare experiment model with production model
+- Calculate and log evaluation metrics
+- Determine if the new model is better (set pass_evaluation flag)
+- Generate evaluation reports and visualizations</p>
+<p><strong>Does NOT do:</strong>
+- Register models to MLflow (handled by Pusher)
+- Transition model stages (handled by Pusher)</p>
 <p><strong>MLflow Usage:</strong>
-- Log evaluation metrics
-- Log evaluation plots
+- Log evaluation metrics (accuracy, precision, recall, etc.)
+- Log evaluation parameters and decisions
+- Log evaluation artifacts (confusion matrix, ROC curves, reports)
 - Load production model for comparison</p>
+<p><strong>Outputs:</strong>
+- Sets <code class="docutils literal notranslate"><span class="pre">pass_evaluation</span></code> in event.context (True if model is better, False otherwise)
+- Returns <code class="docutils literal notranslate"><span class="pre">EvaluatorPayload</span></code> with metrics and comparison results</p>
 <p><strong>Example:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">Event</span>
 <span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">EvaluatorPayload</span>
 <span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span><span class="p">,</span> <span class="n">ModelFlavor</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
 
 <span class="k">class</span> <span class="nc">MyEvaluator</span><span class="p">(</span><span class="n">Evaluator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Model evaluation&quot;</span><span class="p">,</span>
+            <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;team&quot;</span><span class="p">:</span> <span class="s2">&quot;data-science&quot;</span><span class="p">}</span>
+        <span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
         <span class="n">test_data</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">test_data</span>
         <span class="n">X_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">y_test</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
 
-        <span class="c1"># Evaluate</span>
+        <span class="c1"># Evaluate experiment model</span>
         <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
         <span class="n">experiment_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
 
         <span class="c1"># Log metrics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;experiment_accuracy&quot;</span><span class="p">,</span> <span class="n">experiment_accuracy</span><span class="p">)</span>
 
-        <span class="c1"># Compare with production</span>
+        <span class="c1"># Compare with production model</span>
         <span class="n">prod_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_latest_model</span><span class="p">(</span>
             <span class="n">model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span><span class="p">,</span>
             <span class="n">stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
@@ -304,17 +319,20 @@
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">prod_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">production_accuracy</span> <span class="o">=</span> <span class="n">prod_model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+            <span class="n">y_pred_prod</span> <span class="o">=</span> <span class="n">prod_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+            <span class="n">production_accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred_prod</span><span class="p">)</span>
             <span class="n">is_better</span> <span class="o">=</span> <span class="n">experiment_accuracy</span> <span class="o">&gt;</span> <span class="n">production_accuracy</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">production_accuracy</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">is_better</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">is_better</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># No production model, so experiment is better</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span>
-            <span class="s2">&quot;promotion_decision&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;promote&quot;</span> <span class="k">if</span> <span class="n">is_better</span> <span class="k">else</span> <span class="s2">&quot;keep_current&quot;</span>
-        <span class="p">)</span>
+        <span class="c1"># Log comparison results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;production_accuracy&quot;</span><span class="p">,</span> <span class="n">production_accuracy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy_improvement&quot;</span><span class="p">,</span>
+                              <span class="n">experiment_accuracy</span> <span class="o">-</span> <span class="n">production_accuracy</span><span class="p">)</span>
 
+        <span class="c1"># Return evaluation results</span>
+        <span class="c1"># Pusher will check pass_evaluation and register model if True</span>
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
             <span class="n">payload</span><span class="o">=</span><span class="n">EvaluatorPayload</span><span class="p">(</span>
                 <span class="n">metrics</span><span class="o">=</span><span class="p">[</span>
@@ -332,54 +350,123 @@
 </div>
 <div class="section" id="pusher">
 <h3>Pusher<a class="headerlink" href="#pusher" title="Permalink to this heading"></a></h3>
-<p><strong>Purpose:</strong> Model deployment to production environments</p>
+<p><strong>Purpose:</strong> Model registration and deployment</p>
 <p><strong>Responsibilities:</strong>
-- Deploy models to external services (APIs, Elasticsearch, etc.)
-- Transition model stages in MLflow
-- Handle deployment configurations
-- Log deployment metadata</p>
+- Check evaluation results (<code class="docutils literal notranslate"><span class="pre">pass_evaluation</span></code> flag from Evaluator)
+- Register model to MLflow if evaluation passed
+- Transition model to target stage (e.g., Staging, Production)
+- Archive old versions at target stage (optional)
+- Log deployment metadata
+- (Optional) Deploy to external services</p>
+<p><strong>Automatic Behavior:</strong>
+When <code class="docutils literal notranslate"><span class="pre">pass_evaluation</span></code> is True, Pusher automatically:</p>
+<ol class="arabic simple">
+<li><p>Registers the model to MLflow Model Registry</p></li>
+<li><p>Transitions model to the specified <code class="docutils literal notranslate"><span class="pre">target_stage</span></code></p></li>
+<li><p>Archives existing models at that stage (if <code class="docutils literal notranslate"><span class="pre">archive_existing_versions=True</span></code>)</p></li>
+</ol>
 <p><strong>MLflow Usage:</strong>
-- Transition model stages (Staging → Production)
-- Log deployment parameters and tags</p>
-<p><strong>Example: Deploy to External Service</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Pusher</span>
+- <code class="docutils literal notranslate"><span class="pre">mlflow.register_model()</span></code> - Register model to Model Registry
+- <code class="docutils literal notranslate"><span class="pre">transition_model_version()</span></code> - Move model to Production/Staging
+- Log deployment parameters and status</p>
+<p><strong>Configuration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Pusher</span>
+<span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span>
+
+<span class="c1"># Configure Pusher with target stage</span>
+<span class="n">pusher</span> <span class="o">=</span> <span class="n">Pusher</span><span class="p">(</span>
+    <span class="n">target_stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>  <span class="c1"># Deploy to Production</span>
+    <span class="n">archive_existing_versions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>             <span class="c1"># Archive old Production models</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Production deployment&quot;</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;env&quot;</span><span class="p">:</span> <span class="s2">&quot;production&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example 1: Basic MLflow Deployment (Recommended)</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Pusher</span><span class="p">,</span> <span class="n">Event</span>
 <span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">PusherPayload</span>
+<span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span>
+
+<span class="k">class</span> <span class="nc">MyPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">target_stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
+            <span class="n">archive_existing_versions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Deploy to Production&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># Pusher automatically handles:</span>
+        <span class="c1"># - Model registration</span>
+        <span class="c1"># - Stage transition</span>
+        <span class="c1"># - Old version archival</span>
+
+        <span class="c1"># You can add custom logic here if needed</span>
+        <span class="c1"># e.g., send notifications, update database</span>
+
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
+                <span class="n">model_uri</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">),</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Example 2: Deploy to External Service (Advanced)</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Pusher</span><span class="p">,</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">PusherPayload</span>
+<span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span>
 <span class="kn">import</span> <span class="nn">requests</span>
 
-<span class="k">class</span> <span class="nc">ModelDeploymentPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
-        <span class="c1"># Get model from payload</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+<span class="k">class</span> <span class="nc">ExternalDeploymentPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">target_stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
+            <span class="n">archive_existing_versions</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
-        <span class="c1"># Example: Deploy to Elasticsearch or REST API</span>
-        <span class="n">deployment_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://your-ml-engine.com/api/models&quot;</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="c1"># First, Pusher registers model to MLflow automatically</span>
+        <span class="c1"># Then you can add custom deployment logic</span>
+
+        <span class="n">model_version</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;registered_version&#39;</span><span class="p">)</span>
+        <span class="n">model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span>
+
+        <span class="c1"># Deploy to external service</span>
+        <span class="n">deployment_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://your-api.com/models&quot;</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Serialize and post model</span>
             <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
                 <span class="n">deployment_endpoint</span><span class="p">,</span>
                 <span class="n">json</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="s2">&quot;iris_classifier&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;model_data&quot;</span><span class="p">:</span> <span class="n">serialize_model</span><span class="p">(</span><span class="n">model</span><span class="p">),</span>
-                    <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;model_metadata&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="n">model_name</span><span class="p">,</span>
+                    <span class="s2">&quot;model_version&quot;</span><span class="p">:</span> <span class="n">model_version</span><span class="p">,</span>
+                    <span class="s2">&quot;mlflow_uri&quot;</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">)</span>
                 <span class="p">}</span>
             <span class="p">)</span>
 
             <span class="c1"># Log deployment info</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
+                <span class="s2">&quot;external_deployment&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;deployment_endpoint&quot;</span><span class="p">:</span> <span class="n">deployment_endpoint</span><span class="p">,</span>
-                <span class="s2">&quot;deployment_status&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
+                <span class="s2">&quot;deployment_id&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
             <span class="p">})</span>
 
             <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
                 <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                    <span class="n">model_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;external://</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;model_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">model_uri</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">),</span>
                     <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span><span class="p">,</span>
-                    <span class="n">model_version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
-                    <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
-                        <span class="s2">&quot;deployment_id&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;model_id&#39;</span><span class="p">],</span>
-                        <span class="s2">&quot;endpoint&quot;</span><span class="p">:</span> <span class="n">deployment_endpoint</span>
-                    <span class="p">}</span>
+                    <span class="n">model_version</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">model_version</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;deployment_error&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
+                <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
+                    <span class="n">model_uri</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">),</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>

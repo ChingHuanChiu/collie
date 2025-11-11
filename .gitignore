@@ -35,7 +35,7 @@ test.ipynb
 *.db
 mlruns/
 
-example/*/mlflow.db
-example/*/mlruns/
+
+example/
 deployment_manual/*
 requirements.txt

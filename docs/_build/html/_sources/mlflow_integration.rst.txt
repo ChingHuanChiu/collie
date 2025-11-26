@@ -17,12 +17,9 @@ MLflow Interface
 The MLflow Integration Contract
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Collie components inherit from ``MLflowIntegration`` which provides:
+Collie components implement the MLflow integration contract, which exposes MLflow methods. 
+You can access these methods via ``self.mlflow`` in your component classes.
 
-.. autoclass:: collie.contracts.mlflow.MLflowIntegration
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 Available MLflow Methods
 ------------------------

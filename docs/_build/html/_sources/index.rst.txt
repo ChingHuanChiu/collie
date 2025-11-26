@@ -17,11 +17,11 @@ for building machine learning pipelines with deep MLflow integration.
 
 **Key Features:**
 
-* 🎯 **Modular Components**: Transform, Train, Tune, Evaluate, and Push
-* 🔄 **Event-Driven**: Flexible workflow orchestration
-* 📊 **MLflow Integration**: First-class MLflow support for tracking and model management
-* 🚀 **Lightweight**: Simple setup, no complex dependencies
-* 🔧 **Extensible**: Easy to add custom components
+*  **Modular Components**: Transform, Train, Tune, Evaluate, and Push
+*  **Event-Driven**: Flexible workflow orchestration
+*  **MLflow Integration**: First-class MLflow support for tracking and model management
+*  **Lightweight**: Simple setup, no complex dependencies
+*  **Extensible**: Easy to add custom components
 
 Quick Start
 -----------
@@ -138,10 +138,3 @@ Table of Contents
 
    contributing
    changelog
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

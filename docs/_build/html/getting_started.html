@@ -60,25 +60,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#step-4-view-results">Step 4: View Results</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#complete-example">Complete Example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#mlflow-connection-error">MLflow Connection Error</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#import-error">Import Error</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#model-registration-failed">Model Registration Failed</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#get-help">Get Help</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="core_concepts.html">Core Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_passing.html">Data Passing Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
 </ul>
 
         </div>
@@ -175,8 +162,6 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
             <span class="p">}</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -190,8 +175,8 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
     <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="c1"># Get data from transformer</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
-        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="n">target_col</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;target_col&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">)</span>
+        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">target_col</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">extra_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;target_col&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">)</span>
 
         <span class="c1"># Prepare training data</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_names</span><span class="p">]</span>
@@ -207,7 +192,6 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
         <span class="c1"># Log hyperparameters using MLflow</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
-        <span class="c1"># Train model</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
@@ -222,7 +206,7 @@ mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w
         <span class="c1"># Return Event with TrainerPayload</span>
         <span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">TrainerPayload</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">TRAINING_DONE</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -259,78 +243,8 @@ http://localhost:5000
 <li><p>Logged parameters (n_samples, n_features, hyperparameters)</p></li>
 <li><p>Logged metrics (train_accuracy)</p></li>
 <li><p>Logged artifacts (feature_importance.json)</p></li>
-<li><p>Registered model (iris_classifier)</p></li>
+<li><p>Registered model (iris_classifier) #if you have a Pusher component</p></li>
 </ul>
-</div>
-</div>
-<div class="section" id="complete-example">
-<h2>Complete Example<a class="headerlink" href="#complete-example" title="Permalink to this heading"></a></h2>
-<p>Here’s the complete working example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Transformer</span><span class="p">,</span> <span class="n">Trainer</span><span class="p">,</span> <span class="n">Orchestrator</span>
-<span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">TransformerPayload</span><span class="p">,</span> <span class="n">TrainerPayload</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">EventType</span>
-<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_iris</span>
-<span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-
-<span class="k">class</span> <span class="nc">IrisTransformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">()</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">target</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
-            <span class="s2">&quot;n_samples&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
-            <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span>
-        <span class="p">})</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_pd_data</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-            <span class="n">context</span><span class="o">=</span><span class="s2">&quot;training&quot;</span><span class="p">,</span>
-            <span class="n">source</span><span class="o">=</span><span class="s2">&quot;sklearn.datasets.load_iris&quot;</span>
-        <span class="p">)</span>
-
-        <span class="n">payload</span> <span class="o">=</span> <span class="n">TransformerPayload</span><span class="p">(</span>
-            <span class="n">train_data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
-            <span class="n">extra_data</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">feature_names</span><span class="p">),</span>
-                <span class="s2">&quot;target_col&quot;</span><span class="p">:</span> <span class="s2">&quot;target&quot;</span>
-            <span class="p">}</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">DATA_READY</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
-
-<span class="k">class</span> <span class="nc">IrisTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">train_data</span>
-        <span class="n">feature_names</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;feature_names&quot;</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="n">target_col</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">get_extra</span><span class="p">(</span><span class="s2">&quot;target_col&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">)</span>
-
-        <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature_names</span><span class="p">]</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">target_col</span><span class="p">]</span>
-
-        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-
-        <span class="n">model</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-
-        <span class="n">train_accuracy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;train_accuracy&quot;</span><span class="p">,</span> <span class="n">train_accuracy</span><span class="p">)</span>
-
-        <span class="n">importance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">feature_names</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">feature_importances_</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_dict</span><span class="p">(</span><span class="n">importance</span><span class="p">,</span> <span class="s2">&quot;feature_importance.json&quot;</span><span class="p">)</span>
-
-        <span class="n">payload</span> <span class="o">=</span> <span class="n">TrainerPayload</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">EventType</span><span class="o">.</span><span class="n">TRAINING_DONE</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
-
-<span class="c1"># Run the pipeline</span>
-<span class="n">orchestrator</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span>
-    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="n">IrisTransformer</span><span class="p">(),</span> <span class="n">IrisTrainer</span><span class="p">()],</span>
-    <span class="n">tracking_uri</span><span class="o">=</span><span class="s2">&quot;http://localhost:5000&quot;</span><span class="p">,</span>
-    <span class="n">registered_model_name</span><span class="o">=</span><span class="s2">&quot;iris_classifier&quot;</span><span class="p">,</span>
-    <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;iris_experiment&quot;</span>
-<span class="p">)</span>
-<span class="n">orchestrator</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-</pre></div>
 </div>
 </div>
 <div class="section" id="next-steps">
@@ -340,48 +254,8 @@ http://localhost:5000
 <li><p><strong>Add Evaluation</strong> - Create an Evaluator to assess model performance</p></li>
 <li><p><strong>Add Tuning</strong> - Create a Tuner for hyperparameter optimization</p></li>
 <li><p><strong>Add Deployment</strong> - Create a Pusher to deploy models</p></li>
-<li><p><strong>Customize Components</strong> - Extend components for your use case</p></li>
 </ol>
 <p>See the <a class="reference internal" href="core_concepts.html"><span class="doc">Core Concepts</span></a> guide for more details.</p>
-</div>
-<div class="section" id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
-<div class="section" id="mlflow-connection-error">
-<h3>MLflow Connection Error<a class="headerlink" href="#mlflow-connection-error" title="Permalink to this heading"></a></h3>
-<p><strong>Error:</strong> <code class="docutils literal notranslate"><span class="pre">ConnectionError:</span> <span class="pre">Cannot</span> <span class="pre">connect</span> <span class="pre">to</span> <span class="pre">MLflow</span> <span class="pre">server</span></code></p>
-<p><strong>Solution:</strong> Make sure MLflow server is running:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mlflow<span class="w"> </span>server<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">5000</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="import-error">
-<h3>Import Error<a class="headerlink" href="#import-error" title="Permalink to this heading"></a></h3>
-<p><strong>Error:</strong> <code class="docutils literal notranslate"><span class="pre">ModuleNotFoundError:</span> <span class="pre">No</span> <span class="pre">module</span> <span class="pre">named</span> <span class="pre">'collie'</span></code></p>
-<p><strong>Solution:</strong> Install collie-mlops (not collie):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>collie-mlops
-</pre></div>
-</div>
-</div>
-<div class="section" id="model-registration-failed">
-<h3>Model Registration Failed<a class="headerlink" href="#model-registration-failed" title="Permalink to this heading"></a></h3>
-<p><strong>Error:</strong> <code class="docutils literal notranslate"><span class="pre">Model</span> <span class="pre">registration</span> <span class="pre">failed</span></code></p>
-<p><strong>Solution:</strong> Ensure <code class="docutils literal notranslate"><span class="pre">registered_model_name</span></code> is set in Orchestrator:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">orchestrator</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span>
-    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span>
-    <span class="n">tracking_uri</span><span class="o">=</span><span class="s2">&quot;http://localhost:5000&quot;</span><span class="p">,</span>
-    <span class="n">registered_model_name</span><span class="o">=</span><span class="s2">&quot;my_model&quot;</span>  <span class="c1"># Required for registration</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="get-help">
-<h2>Get Help<a class="headerlink" href="#get-help" title="Permalink to this heading"></a></h2>
-<ul class="simple">
-<li><p>GitHub Issues: <a class="reference external" href="https://github.com/ChingHuanChiu/collie/issues">https://github.com/ChingHuanChiu/collie/issues</a></p></li>
-<li><p>Documentation: <a class="reference external" href="https://github.com/ChingHuanChiu/collie/blob/main/README.md">https://github.com/ChingHuanChiu/collie/blob/main/README.md</a></p></li>
-<li><p>Examples: <a class="reference external" href="https://github.com/ChingHuanChiu/collie/tree/main/example">https://github.com/ChingHuanChiu/collie/tree/main/example</a></p></li>
-</ul>
 </div>
 </div>
 

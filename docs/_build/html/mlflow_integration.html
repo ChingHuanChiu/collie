@@ -21,7 +21,6 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Core API Reference" href="api/core.html" />
     <link rel="prev" title="Data Passing Guide" href="data_passing.html" /> 
 </head>
 
@@ -78,11 +77,6 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
-</ul>
 
         </div>
       </div>
@@ -122,7 +116,8 @@ to all MLflow operations.</p>
 <h2>MLflow Interface<a class="headerlink" href="#mlflow-interface" title="Permalink to this heading"></a></h2>
 <div class="section" id="the-mlflow-integration-contract">
 <h3>The MLflow Integration Contract<a class="headerlink" href="#the-mlflow-integration-contract" title="Permalink to this heading"></a></h3>
-<p>Collie components inherit from <code class="docutils literal notranslate"><span class="pre">MLflowIntegration</span></code> which provides:</p>
+<p>Collie components implement the MLflow integration contract, which exposes MLflow methods.
+You can access these methods via <code class="docutils literal notranslate"><span class="pre">self.mlflow</span></code> in your component classes.</p>
 </div>
 </div>
 <div class="section" id="available-mlflow-methods">
@@ -272,7 +267,6 @@ to all MLflow operations.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="data_passing.html" class="btn btn-neutral float-left" title="Data Passing Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="api/core.html" class="btn btn-neutral float-right" title="Core API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

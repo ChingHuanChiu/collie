@@ -80,8 +80,7 @@ The Transformer handles data preprocessing:
                }
            )
            return Event(payload=payload)
-           )
-           return Event(type=EventType.DATA_READY, payload=payload)
+           
 
 Step 2: Create a Trainer
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,8 +96,8 @@ The Trainer handles model training:
        def handle(self, event):
            # Get data from transformer
            df = event.payload.train_data
-           feature_names = event.payload.get_extra("feature_names", [])
-           target_col = event.payload.get_extra("target_col", "target")
+           feature_names = event.payload.extra_data.get("feature_names", [])
+           target_col = event.payload.extra_data.get("target_col", "target")
            
            # Prepare training data
            X = df[feature_names]
@@ -114,7 +113,6 @@ The Trainer handles model training:
            # Log hyperparameters using MLflow
            self.mlflow.log_params(params)
            
-           # Train model
            model = RandomForestClassifier(**params)
            model.fit(X, y)
            
@@ -129,7 +127,7 @@ The Trainer handles model training:
            # Return Event with TrainerPayload
            from collie import TrainerPayload, Event, EventType
            payload = TrainerPayload(model=model)
-           return Event(type=EventType.TRAINING_DONE, payload=payload)
+           return Event(payload=payload)
 
 Step 3: Create an Orchestrator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,79 +167,8 @@ You'll see:
 * Logged parameters (n_samples, n_features, hyperparameters)
 * Logged metrics (train_accuracy)
 * Logged artifacts (feature_importance.json)
-* Registered model (iris_classifier)
+* Registered model (iris_classifier) #if you have a Pusher component
 
-Complete Example
-----------------
-
-Here's the complete working example:
-
-.. code-block:: python
-
-   from collie import Transformer, Trainer, Orchestrator
-   from collie import TransformerPayload, TrainerPayload, Event, EventType
-   from sklearn.datasets import load_iris
-   from sklearn.ensemble import RandomForestClassifier
-   import pandas as pd
-
-   class IrisTransformer(Transformer):
-       def handle(self, event):
-           data = load_iris()
-           df = pd.DataFrame(data.data, columns=data.feature_names)
-           df['target'] = data.target
-           
-           self.mlflow.log_params({
-               "n_samples": len(df),
-               "n_features": len(data.feature_names)
-           })
-           
-           self.mlflow.log_pd_data(
-               data=df,
-               context="training",
-               source="sklearn.datasets.load_iris"
-           )
-           
-           payload = TransformerPayload(
-               train_data=df,
-               extra_data={
-                   "feature_names": list(data.feature_names),
-                   "target_col": "target"
-               }
-           )
-           return Event(type=EventType.DATA_READY, payload=payload)
-
-   class IrisTrainer(Trainer):
-       def handle(self, event):
-           df = event.payload.train_data
-           feature_names = event.payload.get_extra("feature_names", [])
-           target_col = event.payload.get_extra("target_col", "target")
-           
-           X = df[feature_names]
-           y = df[target_col]
-           
-           params = {"n_estimators": 100, "max_depth": 10, "random_state": 42}
-           self.mlflow.log_params(params)
-           
-           model = RandomForestClassifier(**params)
-           model.fit(X, y)
-           
-           train_accuracy = model.score(X, y)
-           self.mlflow.log_metric("train_accuracy", train_accuracy)
-           
-           importance = dict(zip(feature_names, model.feature_importances_))
-           self.mlflow.log_dict(importance, "feature_importance.json")
-           
-           payload = TrainerPayload(model=model)
-           return Event(type=EventType.TRAINING_DONE, payload=payload)
-
-   # Run the pipeline
-   orchestrator = Orchestrator(
-       components=[IrisTransformer(), IrisTrainer()],
-       tracking_uri="http://localhost:5000",
-       registered_model_name="iris_classifier",
-       experiment_name="iris_experiment"
-   )
-   orchestrator.run()
 
 Next Steps
 ----------
@@ -251,53 +178,5 @@ Now that you have a basic pipeline running, you can:
 1. **Add Evaluation** - Create an Evaluator to assess model performance
 2. **Add Tuning** - Create a Tuner for hyperparameter optimization
 3. **Add Deployment** - Create a Pusher to deploy models
-4. **Customize Components** - Extend components for your use case
 
 See the :doc:`core_concepts` guide for more details.
-
-Troubleshooting
----------------
-
-MLflow Connection Error
-~~~~~~~~~~~~~~~~~~~~~~~
-
-**Error:** ``ConnectionError: Cannot connect to MLflow server``
-
-**Solution:** Make sure MLflow server is running:
-
-.. code-block:: bash
-
-   mlflow server --host 0.0.0.0 --port 5000
-
-Import Error
-~~~~~~~~~~~~
-
-**Error:** ``ModuleNotFoundError: No module named 'collie'``
-
-**Solution:** Install collie-mlops (not collie):
-
-.. code-block:: bash
-
-   pip install collie-mlops
-
-Model Registration Failed
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Error:** ``Model registration failed``
-
-**Solution:** Ensure ``registered_model_name`` is set in Orchestrator:
-
-.. code-block:: python
-
-   orchestrator = Orchestrator(
-       components=[...],
-       tracking_uri="http://localhost:5000",
-       registered_model_name="my_model"  # Required for registration
-   )
-
-Get Help
---------
-
-* GitHub Issues: https://github.com/ChingHuanChiu/collie/issues
-* Documentation: https://github.com/ChingHuanChiu/collie/blob/main/README.md
-* Examples: https://github.com/ChingHuanChiu/collie/tree/main/example

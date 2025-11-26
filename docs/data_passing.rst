@@ -12,17 +12,17 @@ User-Friendly Features
 
 Collie Payloads are designed with developer experience in mind:
 
-✅ **Type Safety**: Standard fields have clear types for IDE autocomplete
+ **Type Safety**: Standard fields have clear types for IDE autocomplete
 
-✅ **Flexibility**: ``extra_data`` field for custom data without breaking changes
+ **Flexibility**: ``extra_data`` field for custom data without breaking changes
 
-✅ **Helper Methods**: Convenient methods for accessing extra data:
-   
+ **Helper Methods**: Convenient methods for accessing extra data:
+
    - ``payload.get_extra("key", default)`` - Safe access with default
    - ``payload.set_extra("key", value)`` - Fluent setter with chaining
    - ``payload.has_extra("key")`` - Check existence
 
-✅ **Method Chaining**: Build payloads fluently:
+ **Method Chaining**: Build payloads fluently:
 
 .. code-block:: python
 
@@ -30,7 +30,7 @@ Collie Payloads are designed with developer experience in mind:
               .set_extra("feature_names", features)
               .set_extra("n_classes", 3))
 
-✅ **Pydantic Validation**: Automatic validation and serialization
+**Pydantic Validation**: Automatic validation and serialization
 
 Three Ways to Pass Data
 ------------------------
@@ -256,91 +256,6 @@ Every Payload has an ``extra_data`` dictionary field for flexible custom data.
                )
            )
 
-3. Event Context (Framework Internal - Rarely Needed)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-
-   **Most users should NOT use event.context!**
-   
-   Context is primarily for framework internal use. Use ``payload.extra_data`` for custom data instead.
-
-**When Context is Appropriate (Rare Cases):**
-
-Only use ``event.context`` for pipeline execution metadata that framework or monitoring tools need:
-
-.. code-block:: python
-
-   class MyComponent(Transformer):
-       def handle(self, event: Event) -> Event:
-           import time
-           start_time = time.time()
-           
-           # Do work
-           result = process_data()
-           
-           # ⚠️ Use context ONLY for execution metadata
-           event.context.set("processing_time", time.time() - start_time)
-           event.context.set("component_version", "1.2.0")
-           event.context.set("hostname", socket.gethostname())
-           event.context.set("execution_timestamp", datetime.now().isoformat())
-           
-           # ✅ All business data goes in payload
-           return Event(
-               payload=TransformerPayload(
-                   train_data=result,
-                   extra_data={
-                       "feature_names": features,  # ← Use extra_data, not context!
-                       "n_samples": len(result)
-                   }
-               ),
-               context=event.context
-           )
-
-**❌ DON'T Use Context For:**
-
-- Model objects
-- Training data
-- Feature names
-- Hyperparameters
-- Metrics
-- Any business logic data
-
-**✅ DO Use Context For:**
-
-- Execution timestamps
-- Processing duration
-- Component versions
-- Debug flags
-- Pipeline metadata
-
-**Better Alternative - Use extra_data:**
-
-.. code-block:: python
-
-   # ❌ Wrong - putting business data in context
-   event.context.set("feature_names", features)
-   
-   # ✅ Correct - use payload.extra_data
-   payload.set_extra("feature_names", features)
-
-Decision Tree: Which Method to Use?
-------------------------------------
-
-.. code-block:: text
-
-   Is it core ML data (model, datasets, metrics)?
-   ├─ YES → Use standard Payload fields
-   │         Example: train_data, model, metrics
-   │
-   └─ NO → Is it custom pipeline data?
-           ├─ YES → Use payload.extra_data (RECOMMENDED)
-           │         Example: feature_names, training_curves, custom_metrics
-           │
-           └─ NO → Is it framework/execution metadata?
-                   └─ YES → Use event.context (RARELY NEEDED)
-                             Example: processing_time, execution_timestamp
-                             Note: Most users should use extra_data instead!
 
 Common Patterns
 ---------------
@@ -407,24 +322,6 @@ Pattern 3: Conditional Data Passing
 Best Practices
 --------------
 
-DO's ✅
-~~~~~~~
-
-- **Use standard fields** for common ML data (datasets, models, metrics)
-- **Use extra_data** for custom, experimental, or pipeline-specific data
-- **Use event.context** only for processing metadata (timestamps, versions)
-- **Document** what you put in extra_data in your component docstrings
-- **Provide defaults** when accessing extra_data: ``extra_data.get("key", default)``
-- **Keep extra_data serializable** (use built-in types, not complex objects)
-
-DON'Ts ❌
-~~~~~~~~~
-
-- **Don't** put large objects in extra_data (use artifacts instead)
-- **Don't** rely on undocumented extra_data fields from other components
-- **Don't** use context for main business data (use payload instead)
-- **Don't** modify event.payload.extra_data in place (create a new dict)
-- **Don't** put model objects in extra_data (use standard model field)
 
 Complete Example
 ----------------
@@ -446,10 +343,7 @@ Here's a complete pipeline showing all three data passing methods:
            
            # Load and process data
            train_data, metadata = load_and_process()
-           
-           # Context: processing metadata
-           event.context.set("transform_time", time.time() - start)
-           event.context.set("data_version", "v2.0")
+
            
            return Event(
                payload=TransformerPayload(
@@ -477,15 +371,11 @@ Here's a complete pipeline showing all three data passing methods:
            # Extra data
            features = event.payload.extra_data.get("feature_names", [])
            
-           # Context
-           data_version = event.context.get("data_version")
-           self.mlflow.log_param("data_version", data_version)
+           self.mlflow.log_param("feature_names", features)
+           self.mlflow.log_param("data_version", event.context.get("data_version"))
            
            # Train
            model, history = train_model(train_data, features)
-           
-           # Context: training metadata
-           event.context.set("training_time", time.time() - start)
            
            return Event(
                payload=TrainerPayload(
@@ -521,35 +411,5 @@ Here's a complete pipeline showing all three data passing methods:
                    }
                )
            )
-
-Summary
--------
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 25 35 20
-
-   * - Method
-     - Use For
-     - Example
-     - Usage Frequency
-   * - **Standard Fields**
-     - Core ML data
-     - ``train_data``, ``model``, ``metrics``
-     - Always
-   * - **extra_data**
-     - Custom/experimental data
-     - ``feature_names``, ``training_curves``, ``custom_reports``
-     - Common
-   * - **event.context**
-     - Framework metadata only
-     - ``processing_time``, ``execution_timestamp``
-     - Rarely (internal use)
-
-**Quick Reference:**
-
-- 🟢 **Use Standard Fields**: For all core ML data (model, datasets, metrics)
-- 🟡 **Use extra_data**: For custom pipeline data (99% of custom needs)
-- 🔴 **Avoid context**: Only for framework/execution metadata (rarely needed)
 
 For more examples, see the :doc:`core_concepts` and :doc:`mlflow_integration` pages.

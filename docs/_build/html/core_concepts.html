@@ -73,11 +73,6 @@
 <li class="toctree-l1"><a class="reference internal" href="data_passing.html">Data Passing Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/core.html">Core API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/contracts.html">Contracts API Reference</a></li>
-</ul>
 
         </div>
       </div>
@@ -253,7 +248,7 @@
                     <span class="n">best_params</span> <span class="o">=</span> <span class="n">params</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_dict</span><span class="p">(</span><span class="n">best_params</span><span class="p">,</span> <span class="s2">&quot;best_params.json&quot;</span><span class="p">)</span>
-
+        <span class="c1"># Need to pass train, validation, test data to the next stage</span>
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
             <span class="n">payload</span><span class="o">=</span><span class="n">TunerPayload</span><span class="p">(</span>
                 <span class="n">hyperparameters</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
@@ -283,7 +278,6 @@
 - Log evaluation artifacts (confusion matrix, ROC curves, reports)
 - Load production model for comparison</p>
 <p><strong>Outputs:</strong>
-- Sets <code class="docutils literal notranslate"><span class="pre">pass_evaluation</span></code> in event.context (True if model is better, False otherwise)
 - Returns <code class="docutils literal notranslate"><span class="pre">EvaluatorPayload</span></code> with metrics and comparison results</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">Event</span>
@@ -366,7 +360,7 @@ When <code class="docutils literal notranslate"><span class="pre">pass_evaluatio
 <li><p>Archives existing models at that stage (if <code class="docutils literal notranslate"><span class="pre">archive_existing_versions=True</span></code>)</p></li>
 </ol>
 <p><strong>MLflow Usage:</strong>
-- <code class="docutils literal notranslate"><span class="pre">mlflow.register_model()</span></code> - Register model to Model Registry
+- <code class="docutils literal notranslate"><span class="pre">register_model()</span></code> - Register model to Model Registry
 - <code class="docutils literal notranslate"><span class="pre">transition_model_version()</span></code> - Move model to Production/Staging
 - Log deployment parameters and status</p>
 <p><strong>Configuration:</strong></p>
@@ -382,7 +376,7 @@ When <code class="docutils literal notranslate"><span class="pre">pass_evaluatio
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Example 1: Basic MLflow Deployment (Recommended)</strong></p>
+<p><strong>Example : Basic MLflow Deployment (Recommended)</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Pusher</span><span class="p">,</span> <span class="n">Event</span>
 <span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">PusherPayload</span>
 <span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span>
@@ -406,78 +400,9 @@ When <code class="docutils literal notranslate"><span class="pre">pass_evaluatio
 
         <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
             <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                <span class="n">model_uri</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">),</span>
-                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span>
+                <span class="n">model_uri</span><span class="o">=</span><span class="s2">&quot;Your model URI here&quot;</span>
             <span class="p">)</span>
         <span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Example 2: Deploy to External Service (Advanced)</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collie</span> <span class="kn">import</span> <span class="n">Pusher</span><span class="p">,</span> <span class="n">Event</span>
-<span class="kn">from</span> <span class="nn">collie.core</span> <span class="kn">import</span> <span class="n">PusherPayload</span>
-<span class="kn">from</span> <span class="nn">collie.core.enums.ml_models</span> <span class="kn">import</span> <span class="n">MLflowModelStage</span>
-<span class="kn">import</span> <span class="nn">requests</span>
-
-<span class="k">class</span> <span class="nc">ExternalDeploymentPusher</span><span class="p">(</span><span class="n">Pusher</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">target_stage</span><span class="o">=</span><span class="n">MLflowModelStage</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
-            <span class="n">archive_existing_versions</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
-        <span class="c1"># First, Pusher registers model to MLflow automatically</span>
-        <span class="c1"># Then you can add custom deployment logic</span>
-
-        <span class="n">model_version</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;registered_version&#39;</span><span class="p">)</span>
-        <span class="n">model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered_model_name</span>
-
-        <span class="c1"># Deploy to external service</span>
-        <span class="n">deployment_endpoint</span> <span class="o">=</span> <span class="s2">&quot;https://your-api.com/models&quot;</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-                <span class="n">deployment_endpoint</span><span class="p">,</span>
-                <span class="n">json</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="n">model_name</span><span class="p">,</span>
-                    <span class="s2">&quot;model_version&quot;</span><span class="p">:</span> <span class="n">model_version</span><span class="p">,</span>
-                    <span class="s2">&quot;mlflow_uri&quot;</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">)</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Log deployment info</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">({</span>
-                <span class="s2">&quot;external_deployment&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;deployment_endpoint&quot;</span><span class="p">:</span> <span class="n">deployment_endpoint</span><span class="p">,</span>
-                <span class="s2">&quot;deployment_id&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
-            <span class="p">})</span>
-
-            <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-                <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                    <span class="n">model_uri</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">),</span>
-                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;deployed&quot;</span><span class="p">,</span>
-                    <span class="n">model_version</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">model_version</span><span class="p">)</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;deployment_error&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-                <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                    <span class="n">model_uri</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_uri&#39;</span><span class="p">),</span>
-                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;deployment_error&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">Event</span><span class="p">(</span>
-                <span class="n">payload</span><span class="o">=</span><span class="n">PusherPayload</span><span class="p">(</span>
-                    <span class="n">model_uri</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span>
-                    <span class="n">model_version</span><span class="o">=</span><span class="kc">None</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -683,7 +608,6 @@ When <code class="docutils literal notranslate"><span class="pre">pass_evaluatio
 <ul class="simple">
 <li><p>Use <strong>standard fields</strong> for data that all pipelines need (model, train_data, metrics)</p></li>
 <li><p>Use <strong>extra_data</strong> for pipeline-specific or experimental data</p></li>
-<li><p>Use <strong>event.context</strong> for metadata that doesn’t belong in the payload (timestamps, versions)</p></li>
 </ul>
 </div>
 <div class="section" id="model-comparison">
@@ -745,9 +669,8 @@ When <code class="docutils literal notranslate"><span class="pre">pass_evaluatio
 <div class="section" id="next-steps">
 <h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this heading"></a></h2>
 <ul class="simple">
-<li><p>Explore the <a class="reference internal" href="api/core.html"><span class="doc">Core API Reference</span></a> for detailed API reference</p></li>
 <li><p>See <a class="reference internal" href="mlflow_integration.html"><span class="doc">MLflow Integration</span></a> for MLflow usage patterns</p></li>
-<li><p>Check out example pipelines in the <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory</p></li>
+<li><p>See <a class="reference internal" href="data_passing.html"><span class="doc">Data Passing Guide</span></a> for advanced data passing techniques</p></li>
 </ul>
 </div>
 </div>

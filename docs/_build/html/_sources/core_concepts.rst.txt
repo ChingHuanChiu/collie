@@ -171,7 +171,7 @@ Tuner
                        best_params = params
            
            self.mlflow.log_dict(best_params, "best_params.json")
-           
+           # Need to pass train, validation, test data to the next stage
            return Event(
                payload=TunerPayload(
                    hyperparameters=best_params,
@@ -204,7 +204,6 @@ Evaluator
 - Load production model for comparison
 
 **Outputs:**
-- Sets ``pass_evaluation`` in event.context (True if model is better, False otherwise)
 - Returns ``EvaluatorPayload`` with metrics and comparison results
 
 **Example:**
@@ -292,7 +291,7 @@ When ``pass_evaluation`` is True, Pusher automatically:
 3. Archives existing models at that stage (if ``archive_existing_versions=True``)
 
 **MLflow Usage:**
-- ``mlflow.register_model()`` - Register model to Model Registry
+- ``register_model()`` - Register model to Model Registry
 - ``transition_model_version()`` - Move model to Production/Staging
 - Log deployment parameters and status
 
@@ -311,7 +310,7 @@ When ``pass_evaluation`` is True, Pusher automatically:
        tags={"env": "production"}
    )
 
-**Example 1: Basic MLflow Deployment (Recommended)**
+**Example : Basic MLflow Deployment (Recommended)**
 
 .. code-block:: python
 
@@ -338,80 +337,9 @@ When ``pass_evaluation`` is True, Pusher automatically:
            
            return Event(
                payload=PusherPayload(
-                   model_uri=event.context.get('model_uri'),
-                   status="deployed"
+                   model_uri="Your model URI here" 
                )
            )
-
-**Example 2: Deploy to External Service (Advanced)**
-
-.. code-block:: python
-
-   from collie import Pusher, Event
-   from collie.core import PusherPayload
-   from collie.core.enums.ml_models import MLflowModelStage
-   import requests
-   
-   class ExternalDeploymentPusher(Pusher):
-       def __init__(self):
-           super().__init__(
-               target_stage=MLflowModelStage.PRODUCTION,
-               archive_existing_versions=True
-           )
-       
-       def handle(self, event: Event) -> Event:
-           # First, Pusher registers model to MLflow automatically
-           # Then you can add custom deployment logic
-           
-           model_version = event.context.get('registered_version')
-           model_name = self.registered_model_name
-           
-           # Deploy to external service
-           deployment_endpoint = "https://your-api.com/models"
-           
-           try:
-               response = requests.post(
-                   deployment_endpoint,
-                   json={
-                       "model_name": model_name,
-                       "model_version": model_version,
-                       "mlflow_uri": event.context.get('model_uri')
-                   }
-               )
-               
-               # Log deployment info
-               self.mlflow.log_params({
-                   "external_deployment": "success",
-                   "deployment_endpoint": deployment_endpoint,
-                   "deployment_id": response.json().get('id')
-               })
-               
-               return Event(
-                   payload=PusherPayload(
-                       model_uri=event.context.get('model_uri'),
-                       status="deployed",
-                       model_version=str(model_version)
-                   )
-               )
-           except Exception as e:
-               self.mlflow.log_param("deployment_error", str(e))
-               return Event(
-                   payload=PusherPayload(
-                       model_uri=event.context.get('model_uri'),
-                       status="failed"
-                   )
-               )
-                   )
-               )
-           except Exception as e:
-               self.mlflow.log_param("deployment_error", str(e))
-               return Event(
-                   payload=PusherPayload(
-                       model_uri="",
-                       status="failed",
-                       model_version=None
-                   )
-               )
 
 Event-Based Data Flow
 ---------------------
@@ -627,7 +555,6 @@ Each Payload has an ``extra_data`` field for custom data beyond standard fields:
 
 - Use **standard fields** for data that all pipelines need (model, train_data, metrics)
 - Use **extra_data** for pipeline-specific or experimental data
-- Use **event.context** for metadata that doesn't belong in the payload (timestamps, versions)
 
 
 Model Comparison
@@ -691,6 +618,5 @@ Compare models using MLflow:
 Next Steps
 ----------
 
-- Explore the :doc:`api/core` for detailed API reference
 - See :doc:`mlflow_integration` for MLflow usage patterns
-- Check out example pipelines in the ``examples/`` directory
+- See :doc:`data_passing` for advanced data passing techniques

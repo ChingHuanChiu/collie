@@ -62,7 +62,7 @@ Handles data preprocessing, feature engineering, and data validation.
 class CustomTransformer(Transformer):
     def handle(self, event) -> Event:
         # Process your data
-        processed_data = self.preprocess(raw_data)
+        processed_data = ... 
         return Event(payload=TransformerPayload(train_data=processed_data))
 ```
 
@@ -73,7 +73,7 @@ Performs hyperparameter optimization using various strategies.
 class CustomTuner(Tuner):
     def handle(self, event) -> Event:
         # Optimize hyperparameters
-        best_params = self.optimize(search_space)
+        best_params = ...
         return Event(payload=TunerPayload(hyperparameters=best_params))
 ```
 
@@ -84,7 +84,7 @@ Trains machine learning models with automatic experiment tracking.
 class CustomTrainer(Trainer):
     def handle(self, event) -> Event:
         # Train your model
-        model = self.train(data, hyperparameters)
+        model = ...
         return Event(payload=TrainerPayload(model=model))
 ```
 
@@ -95,8 +95,8 @@ Evaluates model performance and decides on deployment.
 class CustomEvaluator(Evaluator):
     def handle(self, event) -> Event:
         # Evaluate model performance
-        metrics = self.evaluate(model, test_data)
-        is_better = self.compare_with_production(metrics)
+        metrics = ...
+        is_better: bool = ...
         return Event(payload=EvaluatorPayload(
             metrics=metrics, 
             is_better_than_production=is_better
@@ -110,7 +110,7 @@ Handles model deployment and registration.
 class CustomPusher(Pusher):
     def handle(self, event) -> Event:
         # Deploy model to production
-        model_uri = self.deploy(model)
+        model_uri = ...
         return Event(payload=PusherPayload(model_uri=model_uri))
 ```
 
@@ -147,9 +147,7 @@ Collie supports multiple ML frameworks through its model flavor system currently
 
 - [ ] TensorFlow/Keras support
 - [ ] Model monitoring and drift detection
-- [ ] Integration with Airflow/Kubeflow
 - [ ] Integrate an LLM training/fine-tuning framework
-- [ ] Solve the issue about heavy import and installation.
 
 ## License
 
